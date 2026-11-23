@@ -9,27 +9,26 @@ ProdForge is an autonomous AI agent and engineering suite built to take any syst
 - **Production Hardener:** Autonomously generates multi-stage non-root Dockerfiles, `docker-compose.yml`, GitHub Actions CI/CD gates, and Kubernetes liveness/readiness probes.
 - **FinOps & Scaling Feasibility Engine:** Computes peak RPS thresholds, concurrency limits, itemized monthly cloud infrastructure costs, and single-point-of-failure bottlenecks.
 - **Interactive Web Studio:** A cyber-sleek, dark-mode real-time dashboard featuring live Mermaid diagram rendering, interactive code scanning, and telemetry meters.
+- **Instant Public Tunnel Sharing:** Expose your local Web Studio to the entire world over secure HTTPS via built-in Cloudflare Tunnel integration (`prodforge share`).
 
 ---
 
-## 🚀 Quickstart & Installation
+## 🚀 Quickstart
 
-ProdForge is installed locally in Drive `D:\prodforge`.
+Run directly from any terminal:
 
 ```powershell
-cd D:\prodforge
+# View all commands
+prodforge --help
 
-# View available commands
-python -m prodforge --help
-
-# Inspect configured providers and models
-python -m prodforge config
+# Inspect detected providers & models
+prodforge config
 ```
 
 ### Environment Configuration
 ProdForge works **100% out-of-the-box in Offline Heuristic Mode** without needing any API key or internet access!
 
-To unlock multi-provider dynamic LLM synthesis, copy `.env.example` to `.env` and add any of your preferred API keys:
+To unlock multi-provider dynamic LLM synthesis, copy `.env.example` to `.env` in `D:\prodforge` and add your preferred API keys:
 ```env
 # Google Gemini
 GEMINI_API_KEY=AIzaSy...
@@ -47,86 +46,89 @@ OLLAMA_HOST=http://localhost:11434
 
 ## 🛠️ CLI Commands & Usage
 
-### 1. Architecture & Execution Planner
+### 1. Instant Public Web Studio Sharing
 ```powershell
-python -m prodforge plan "Real-time collaborative canvas with CRDT synchronization and WebSockets" --constraints "FastAPI, PostgreSQL, Redis" --out blueprint.md
+prodforge share
+```
+*Starts the local Web Studio and generates an instant, secure public HTTPS URL (e.g. `https://xxxx.trycloudflare.com`) accessible from any mobile, tablet, or external computer worldwide.*
+
+### 2. Local Interactive Web Studio
+```powershell
+prodforge studio --port 8000
+```
+*Opens [http://127.0.0.1:8000](http://127.0.0.1:8000) in your default browser.*
+
+### 3. Architecture & Execution Planner
+```powershell
+prodforge plan "Real-time collaborative canvas with CRDT synchronization and WebSockets" --constraints "FastAPI, PostgreSQL, Redis" --out blueprint.md
 ```
 
-### 2. Deep Code Auditor & Production Readiness Scorecard
+### 4. Deep Code Auditor & Production Readiness Scorecard (0–100)
 ```powershell
-python -m prodforge audit D:\prodforge --out audit_report.md
-```
-Outputs a full telemetry card, cyclomatic complexity estimates, line counts, discovered vulnerabilities, and prioritized remediation steps.
-
-### 3. Autonomous QA Suite Generator
-```powershell
-python -m prodforge test src/prodforge/config.py --out tests/test_generated.py
+prodforge audit D:\prodforge --out audit_report.md
 ```
 
-### 4. Production Hardener
+### 5. Autonomous QA Suite Generator
+```powershell
+prodforge test src/prodforge/config.py --out tests/test_generated.py
+```
+
+### 6. Production Hardener
 ```powershell
 # Preview hardening assets
-python -m prodforge harden D:\prodforge
+prodforge harden D:\prodforge
 
 # Automatically apply Dockerfile, compose, and CI/CD gates to disk
-python -m prodforge harden D:\prodforge --apply
+prodforge harden D:\prodforge --apply
 ```
 
-### 5. FinOps & Feasibility Engine
+### 7. FinOps & Feasibility Engine
 ```powershell
-python -m prodforge feasibility "FinTech order matching engine with ledger audit" --dau 100000
-```
-
-### 6. Interactive Web Studio
-```powershell
-python -m prodforge studio --port 8000
-```
-Open [http://127.0.0.1:8000](http://127.0.0.1:8000) to access the interactive web interface.
-
----
-
-## 🏛️ Architecture & Project Structure
-
-```
-D:\prodforge\
-├── pyproject.toml              # Dependencies & CLI entry point
-├── README.md                   # Complete documentation
-├── .env.example                # Provider template
-├── src\
-│   └── prodforge\
-│       ├── __init__.py         # Package exports & version
-│       ├── __main__.py         # python -m prodforge execution
-│       ├── config.py           # Multi-provider configuration manager
-│       ├── client.py           # Multi-LLM client (Gemini, OpenAI, Groq, Ollama, Offline)
-│       ├── cli.py              # Interactive Rich Typer CLI
-│       ├── engines\
-│       │   ├── planner.py      # Architecture, C4 Mermaid, STRIDE, Roadmap
-│       │   ├── auditor.py      # Static + AST + LLM Code Auditor (0-100 score)
-│       │   ├── qa_tester.py    # Test generation (pytest/vitest) with edge cases
-│       │   ├── hardener.py     # Dockerfile, docker-compose, CI/CD, healthchecks
-│       │   └── feasibility.py  # FinOps cost models, RPS capacity, bottlenecks
-│       ├── static_rules\
-│       │   ├── security_rules.py # OWASP Top 10, Secrets, SQLi, RCE, Shell, XSS
-│       │   └── quality_rules.py  # Error swallowing, debug prints, loose types
-│       └── studio\
-│           ├── server.py       # FastAPI backend & WebSocket server
-│           └── static\
-│               ├── index.html  # Cyberpunk Bento grid UI
-│               ├── styles.css  # Bespoke glassmorphism styling
-│               └── app.js      # Mermaid.js + REST controller
-└── tests\
-    ├── test_config.py
-    ├── test_static_rules.py
-    ├── test_engines.py
-    └── test_studio_api.py
+prodforge feasibility "FinTech order matching engine with ledger audit" --dau 100000
 ```
 
 ---
 
-## 🧪 Verification & Testing
+## 🌐 How to Make ProdForge Public
 
-Run the full automated test suite:
+### Method 1: Instant Public URL (Live in 5 Seconds)
+Run:
+```powershell
+prodforge share
+```
+Cloudflare Tunnel will output a public HTTPS link (e.g. `https://random-words.trycloudflare.com`). Share this link with friends or colleagues!
+
+### Method 2: Publish as Public Open-Source on GitHub
+Your GitHub CLI (`gh`) is already logged in! Run:
+```powershell
+cd D:\prodforge
+gh repo create prodforge --public --source=. --push
+```
+Your code will instantly be live on GitHub at `https://github.com/mradityasonicse/prodforge`.
+
+### Method 3: Publish to PyPI (`pip install prodforge`)
+To allow any developer in the world to install your tool:
+```powershell
+cd D:\prodforge
+python -m pip install build twine
+python -m build
+twine upload dist/*
+```
+
+### Method 4: Permanent 24/7 Cloud Hosting (Render / Railway / Hugging Face)
+1. Push your repository to GitHub (Method 2).
+2. Go to [render.com](https://render.com) or [railway.app](https://railway.app).
+3. Connect your GitHub repository.
+4. Select **Docker** or **Python** environment, set start command to:
+   ```bash
+   uvicorn prodforge.studio.server:app --host 0.0.0.0 --port 8000
+   ```
+5. Your studio will be live 24/7 on a permanent custom domain with free SSL!
+
+---
+
+## 🧪 Automated Testing
 ```powershell
 python -m pytest D:\prodforge\tests -v
 ```
-All 24 unit and integration tests pass with 100% verification.
+All 24 test suites pass with 100% verification.
