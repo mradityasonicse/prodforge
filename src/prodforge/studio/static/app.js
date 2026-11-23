@@ -145,6 +145,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const auditPath = document.getElementById("audit-path");
   const btnRunAudit = document.getElementById("btn-run-audit");
   const btnAuditVulnPreset = document.getElementById("btn-audit-vuln-preset");
+  const btnAuditRepoPreset = document.getElementById("btn-audit-repo-preset");
   const auditLoading = document.getElementById("audit-loading");
   const auditEmpty = document.getElementById("audit-empty");
   const auditResults = document.getElementById("audit-results-content");
@@ -196,6 +197,17 @@ def query_user_account(user_id, raw_filter):
     return query
 `;
   });
+
+  if (btnAuditRepoPreset) {
+    btnAuditRepoPreset.addEventListener("click", () => {
+      auditMode = "path";
+      btnAuditPath.classList.add("active");
+      btnAuditSnippet.classList.remove("active");
+      snippetGroup.classList.add("hidden");
+      pathGroup.classList.remove("hidden");
+      auditPath.value = "https://github.com/mradityasonicse/prodforge";
+    });
+  }
 
   btnRunAudit.addEventListener("click", async () => {
     const payload = {};

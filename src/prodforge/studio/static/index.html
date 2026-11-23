@@ -122,7 +122,7 @@
             <h3>Target Code / Project Path</h3>
             <div class="toggle-group">
               <button class="btn-toggle active" id="btn-audit-snippet">Snippet</button>
-              <button class="btn-toggle" id="btn-audit-path">Local Path</button>
+              <button class="btn-toggle" id="btn-audit-path">Git Repo URL / Path</button>
             </div>
           </div>
           <div class="card-body">
@@ -131,8 +131,8 @@
               <textarea id="audit-code" class="input-area code-font" rows="12" placeholder="# Paste your Python, TypeScript, or Node code here..."></textarea>
             </div>
             <div id="path-input-group" class="hidden">
-              <label class="form-label" for="audit-path">Local Project / File Path</label>
-              <input type="text" id="audit-path" class="input-text" placeholder="e.g. D:\prodforge or C:\Projects\MyAPI">
+              <label class="form-label" for="audit-path">GitHub Repository URL or Project Path</label>
+              <input type="text" id="audit-path" class="input-text" placeholder="e.g. https://github.com/mradityasonicse/prodforge or D:\my-project">
             </div>
 
             <div class="action-row">
@@ -141,6 +141,9 @@
               </button>
               <button class="btn btn-secondary" id="btn-audit-vuln-preset">
                 Load Vulnerable Sample
+              </button>
+              <button class="btn btn-secondary" id="btn-audit-repo-preset">
+                Load GitHub Repo Sample
               </button>
             </div>
           </div>
