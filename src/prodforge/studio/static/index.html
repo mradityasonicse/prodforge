@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="homenest">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ProdForge Studio — Enterprise Production AI Suite</title>
+  <title>HomeNest Studio — Production Software & Architecture Suite</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Alike&family=Nunito:wght@400;500;600;700;800&family=Source+Code+Pro:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="/static/styles.css">
@@ -19,10 +19,10 @@
   <header class="app-header">
     <div class="header-left">
       <div class="brand-logo">
-        <span class="logo-symbol">⚡</span>
-        <span class="brand-name">Prod<span class="brand-accent">Forge</span></span>
+        <span class="logo-symbol">🏡</span>
+        <span class="brand-name">Home<span class="brand-accent">Nest</span></span>
       </div>
-      <span class="version-tag">ENTERPRISE EDITION v1.0</span>
+      <span class="version-tag">DESIGN SYSTEM</span>
     </div>
 
     <div class="header-center">
@@ -49,6 +49,9 @@
     </div>
 
     <div class="header-right">
+      <button class="theme-toggle-btn" id="btn-theme-toggle" title="Toggle HomeNest / Cyber Dark theme">
+        <span id="theme-toggle-icon">🏡</span> <span id="theme-toggle-text">HomeNest</span>
+      </button>
       <div class="provider-pill">
         <span class="pulse-dot"></span>
         <span id="provider-badge">DETECTING...</span>

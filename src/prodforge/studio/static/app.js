@@ -33,6 +33,34 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
+  // --- HomeNest Design System Theme Engine ---
+  const btnThemeToggle = document.getElementById("btn-theme-toggle");
+  const themeToggleIcon = document.getElementById("theme-toggle-icon");
+  const themeToggleText = document.getElementById("theme-toggle-text");
+
+  function setTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("prodforge-theme", theme);
+    if (theme === "homenest") {
+      if (themeToggleIcon) themeToggleIcon.textContent = "🏡";
+      if (themeToggleText) themeToggleText.textContent = "HomeNest";
+    } else {
+      if (themeToggleIcon) themeToggleIcon.textContent = "🌙";
+      if (themeToggleText) themeToggleText.textContent = "Cyber Dark";
+    }
+  }
+
+  const savedTheme = localStorage.getItem("prodforge-theme") || "homenest";
+  setTheme(savedTheme);
+
+  if (btnThemeToggle) {
+    btnThemeToggle.addEventListener("click", () => {
+      const current = document.documentElement.getAttribute("data-theme") || "homenest";
+      const nextTheme = current === "homenest" ? "cyber-dark" : "homenest";
+      setTheme(nextTheme);
+    });
+  }
+
   fetchStatus();
 
   async function fetchStatus() {
