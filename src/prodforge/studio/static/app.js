@@ -63,6 +63,127 @@ document.addEventListener("DOMContentLoaded", () => {
 
   fetchStatus();
 
+  // ==========================================================================
+  // Claude Code / Antigravity Elite Motion & Micro-Interaction Engine
+  // ==========================================================================
+
+  // 1. Toast Notification System
+  function showToast(message, type = "info") {
+    const container = document.getElementById("toast-container");
+    if (!container) return;
+    const toast = document.createElement("div");
+    toast.className = `toast toast-${type}`;
+    const icon = type === "success" ? "✓" : type === "error" ? "✗" : "ℹ";
+    toast.innerHTML = `<span style="font-weight:700;">${icon}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = "0";
+      toast.style.transform = "translateX(100%)";
+      setTimeout(() => toast.remove(), 350);
+    }, 3200);
+  }
+
+  // 2. Claude Code Live Telemetry Logger
+  const terminalLogs = document.getElementById("terminal-logs");
+  const agentLastActivity = document.getElementById("agent-last-activity");
+  function logTelemetry(msg, level = "info") {
+    if (agentLastActivity) agentLastActivity.textContent = msg;
+    if (!terminalLogs) return;
+    const now = new Date().toTimeString().split(" ")[0];
+    const line = document.createElement("div");
+    line.className = `log-line ${level}`;
+    line.textContent = `[${now}] ${msg}`;
+    terminalLogs.appendChild(line);
+    terminalLogs.scrollTop = terminalLogs.scrollHeight;
+  }
+
+  // 3. Telemetry Drawer Expand / Collapse
+  const btnToggleDrawer = document.getElementById("btn-toggle-drawer");
+  const telemetryToggleBar = document.getElementById("telemetry-toggle-bar");
+  const terminalBody = document.getElementById("terminal-body");
+  const btnClearTerm = document.getElementById("btn-clear-term");
+
+  if (telemetryToggleBar && terminalBody) {
+    const toggle = () => {
+      const isHidden = terminalBody.classList.toggle("hidden");
+      if (btnToggleDrawer) {
+        btnToggleDrawer.textContent = isHidden ? "▲ Expand Terminal" : "▼ Collapse Terminal";
+      }
+    };
+    telemetryToggleBar.addEventListener("click", (e) => {
+      if (e.target.id !== "btn-toggle-drawer") toggle();
+    });
+    if (btnToggleDrawer) btnToggleDrawer.addEventListener("click", toggle);
+  }
+  if (btnClearTerm && terminalLogs) {
+    btnClearTerm.addEventListener("click", () => {
+      terminalLogs.innerHTML = `<div class="log-line info">[SYS] Terminal cleared.</div>`;
+    });
+  }
+
+  // 4. Tactile Button Ripple Effect (Material & Spring wave)
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn, .btn-sm, .nav-tab, .theme-toggle-btn");
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const size = Math.max(rect.width, rect.height);
+    const x = e.clientX - rect.left - size / 2;
+    const y = e.clientY - rect.top - size / 2;
+
+    const wave = document.createElement("span");
+    wave.className = "ripple-wave";
+    wave.style.width = wave.style.height = `${size}px`;
+    wave.style.left = `${x}px`;
+    wave.style.top = `${y}px`;
+
+    btn.appendChild(wave);
+    wave.addEventListener("animationend", () => wave.remove());
+  });
+
+  // 5. 3D Card Perspective Tilt & Cursor Specular Sheen
+  document.querySelectorAll(".card").forEach((card) => {
+    card.classList.add("interactive-card");
+    card.addEventListener("mousemove", (e) => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      const centerX = rect.width / 2;
+      const centerY = rect.height / 2;
+
+      // Subtle tilt
+      const rotateX = ((y - centerY) / centerY) * -2.5;
+      const rotateY = ((x - centerX) / centerX) * 2.5;
+
+      card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg)`;
+      card.style.setProperty("--mouse-x", `${x}px`);
+      card.style.setProperty("--mouse-y", `${y}px`);
+    });
+
+    card.addEventListener("mouseleave", () => {
+      card.style.transform = "perspective(1000px) rotateX(0deg) rotateY(0deg)";
+    });
+  });
+
+  // 6. Smooth Number Counter (Odometer Animation)
+  function animateCounter(el, targetVal, duration = 800) {
+    if (!el) return;
+    const startVal = 0;
+    const startTime = performance.now();
+    function update(now) {
+      const elapsed = now - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const current = Math.round(startVal + (targetVal - startVal) * eased);
+      el.textContent = current;
+      if (progress < 1) {
+        requestAnimationFrame(update);
+      } else {
+        el.textContent = targetVal;
+      }
+    }
+    requestAnimationFrame(update);
+  }
+
   async function fetchStatus() {
     try {
       const res = await fetch("/api/status");
@@ -284,23 +405,31 @@ def query_user_account(user_id, raw_filter):
 
   function renderAuditResults(data) {
     auditResults.classList.remove("hidden");
-    auditScoreBadge.textContent = `${data.readiness_score}/100`;
+    
+    // Animate score counter
+    animateCounter(auditScoreBadge, data.readiness_score);
+    setTimeout(() => {
+      auditScoreBadge.textContent = `${data.readiness_score}/100`;
+    }, 850);
 
     if (data.readiness_score >= 90) {
-      auditScoreBadge.style.color = "var(--accent-emerald)";
-      auditScoreBadge.style.borderColor = "rgba(16, 185, 129, 0.4)";
+      auditScoreBadge.style.color = "var(--hn-success)";
+      auditScoreBadge.style.borderColor = "rgba(22, 163, 74, 0.4)";
     } else if (data.readiness_score >= 70) {
-      auditScoreBadge.style.color = "var(--accent-amber)";
-      auditScoreBadge.style.borderColor = "rgba(245, 158, 11, 0.4)";
+      auditScoreBadge.style.color = "var(--hn-warning)";
+      auditScoreBadge.style.borderColor = "rgba(217, 119, 6, 0.4)";
     } else {
-      auditScoreBadge.style.color = "var(--accent-rose)";
-      auditScoreBadge.style.borderColor = "rgba(244, 63, 94, 0.4)";
+      auditScoreBadge.style.color = "var(--hn-error)";
+      auditScoreBadge.style.borderColor = "rgba(220, 38, 38, 0.4)";
     }
 
-    tallyCrit.textContent = data.critical_count;
-    tallyHigh.textContent = data.high_count;
-    tallyMed.textContent = data.medium_count;
-    tallyLow.textContent = data.low_count;
+    animateCounter(tallyCrit, data.critical_count);
+    animateCounter(tallyHigh, data.high_count);
+    animateCounter(tallyMed, data.medium_count);
+    animateCounter(tallyLow, data.low_count);
+
+    showToast(`Audit Completed: Readiness Score ${data.readiness_score}/100`, data.readiness_score >= 80 ? "success" : "warn");
+    logTelemetry(`Audit finished for ${lastAuditPayload.target_path || 'snippet'} -> Score: ${data.readiness_score}/100 (${data.findings ? data.findings.length : 0} issues)`, "success");
 
     // Render 5-Pillar Scorecard
     if (data.pillars) {
@@ -318,56 +447,57 @@ def query_user_account(user_id, raw_filter):
           <tr>
             <td><strong>1. Security & Vulnerability Shield</strong></td>
             <td>35%</td>
-            <td style="color:${p.security_score >= 80 ? 'var(--accent-emerald)' : 'var(--accent-rose)'}; font-weight:bold;">${p.security_score}/100</td>
+            <td style="color:${p.security_score >= 80 ? 'var(--hn-success)' : 'var(--hn-error)'}; font-weight:bold;">${p.security_score}/100</td>
             <td>${p.security_score >= 80 ? 'Verified Shield' : 'Vulnerabilities Discovered'}</td>
           </tr>
           <tr>
             <td><strong>2. Code Quality & Technical Debt</strong></td>
             <td>20%</td>
-            <td style="color:var(--accent-cyan); font-weight:bold;">${p.quality_score}/100</td>
+            <td style="color:var(--hn-primary); font-weight:bold;">${p.quality_score}/100</td>
             <td>${p.quality_score >= 80 ? 'Clean Code' : 'Smells Detected'}</td>
           </tr>
           <tr>
             <td><strong>3. Architecture & Complexity</strong></td>
             <td>15%</td>
-            <td style="color:var(--accent-cyan); font-weight:bold;">${p.architecture_score}/100</td>
+            <td style="color:var(--hn-primary); font-weight:bold;">${p.architecture_score}/100</td>
             <td>${p.architecture_score >= 80 ? 'Low Complexity' : 'High Branching'}</td>
           </tr>
           <tr>
             <td><strong>4. QA & Test Automation</strong></td>
             <td>15%</td>
-            <td style="color:var(--accent-cyan); font-weight:bold;">${p.test_readiness_score}/100</td>
+            <td style="color:var(--hn-primary); font-weight:bold;">${p.test_readiness_score}/100</td>
             <td>${p.test_readiness_score >= 80 ? 'Tests Verified' : 'Coverage Needed'}</td>
           </tr>
           <tr>
             <td><strong>5. DevOps & Container Hardening</strong></td>
             <td>15%</td>
-            <td style="color:var(--accent-cyan); font-weight:bold;">${p.devops_hardening_score}/100</td>
+            <td style="color:var(--hn-primary); font-weight:bold;">${p.devops_hardening_score}/100</td>
             <td>${p.devops_hardening_score >= 80 ? 'Production Containers' : 'Hardening Recommended'}</td>
           </tr>
         </tbody>
       </table>`;
     }
 
-    // Render Findings List
+    // Render Findings List with Staggered Cascading Animation
     findingsList.innerHTML = "";
     if (data.findings && data.findings.length > 0) {
-      data.findings.forEach(f => {
+      data.findings.forEach((f, idx) => {
         const item = document.createElement("div");
         item.className = `finding-item ${f.severity}`;
+        item.style.setProperty("--item-idx", idx);
         item.innerHTML = `
           <div class="finding-header">
             <span class="finding-title">[${f.severity}] ${f.title} (${f.rule_id})</span>
             <span class="finding-loc">Line ${f.line_number}</span>
           </div>
           <div class="finding-desc">${f.description}</div>
-          ${f.line_content ? `<pre class="code-font" style="margin-bottom:0.4rem; font-size:0.75rem; color:#F87171;">${escapeHtml(f.line_content)}</pre>` : ''}
+          ${f.line_content ? `<pre class="code-font" style="margin-bottom:0.4rem; font-size:0.75rem; color:#DC2626;">${escapeHtml(f.line_content)}</pre>` : ''}
           <div class="finding-fix"><strong>Remediation:</strong> ${f.remediation}</div>
         `;
         findingsList.appendChild(item);
       });
     } else {
-      findingsList.innerHTML = `<p style="color: var(--accent-emerald); font-size: 0.88rem;">✓ No security vulnerabilities or critical code smells discovered!</p>`;
+      findingsList.innerHTML = `<p style="color: var(--hn-success); font-size: 0.92rem;">✓ Zero security vulnerabilities or critical code smells discovered!</p>`;
     }
 
     if (data.llm_recommendations) {
@@ -394,19 +524,22 @@ def query_user_account(user_id, raw_filter):
       a.download = "prodforge.sarif";
       a.click();
       URL.revokeObjectURL(url);
+      showToast("OASIS SARIF v2.1.0 exported successfully!", "success");
+      logTelemetry("SARIF v2.1.0 exported for GitHub Code Scanning", "info");
     } catch (err) {
-      alert("SARIF export error: " + err.message);
+      showToast("SARIF export error: " + err.message, "error");
     }
   });
 
   if (btnExportPdf) {
     btnExportPdf.addEventListener("click", async () => {
       if (!lastAuditPayload) {
-        alert("Please execute an audit first to export PDF.");
+        showToast("Please execute an audit first to export PDF.", "error");
         return;
       }
       btnExportPdf.textContent = "⏳ Generating PDF...";
       btnExportPdf.disabled = true;
+      logTelemetry("Rendering executive vector PDF audit report...", "info");
       try {
         const res = await fetch("/api/pdf", {
           method: "POST",
@@ -424,8 +557,11 @@ def query_user_account(user_id, raw_filter):
         a.download = "prodforge-audit-report.pdf";
         a.click();
         URL.revokeObjectURL(url);
+        showToast("Executive PDF report generated and downloaded!", "success");
+        logTelemetry("Executive PDF report successfully generated & dispatched", "success");
       } catch (err) {
-        alert("PDF export error: " + err.message);
+        showToast("PDF export error: " + err.message, "error");
+        logTelemetry("PDF generation error: " + err.message, "error");
       } finally {
         btnExportPdf.textContent = "📄 Export PDF";
         btnExportPdf.disabled = false;

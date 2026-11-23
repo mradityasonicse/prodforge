@@ -392,6 +392,35 @@
 
   </main>
 
+  <!-- Toast Notification Stack -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Live Agent Telemetry Drawer (Claude Code / Codex Terminal Engine) -->
+  <footer class="telemetry-drawer" id="telemetry-drawer">
+    <div class="telemetry-bar" id="telemetry-toggle-bar">
+      <div class="bar-left">
+        <span class="terminal-status-dot"></span>
+        <span class="bar-title">⚡ PRODFORGE AGENT TELEMETRY</span>
+        <span class="bar-subtitle" id="agent-last-activity">Engine Idle — Ready for synthesis</span>
+      </div>
+      <div class="bar-right">
+        <span class="telemetry-meta" id="telemetry-latency">Latency: 8ms</span>
+        <button class="btn-drawer-toggle" id="btn-toggle-drawer">▲ Expand Terminal</button>
+      </div>
+    </div>
+    <div class="terminal-body hidden" id="terminal-body">
+      <div class="terminal-header">
+        <span>agent@prodforge-engine:~$ live-stream --format=telemetry</span>
+        <button class="btn-clear-term" id="btn-clear-term">Clear</button>
+      </div>
+      <div class="terminal-logs" id="terminal-logs">
+        <div class="log-line info">[SYS] HomeNest Design System & Kinetic Motion Spine initialized.</div>
+        <div class="log-line info">[SYS] Claude Code telemetry stream online. Ready for automated actions.</div>
+        <div class="log-line success">[ENGINE] 5-Pillar Production Readiness Index, SARIF & Vector PDF engines active.</div>
+      </div>
+    </div>
+  </footer>
+
   <script src="/static/app.js"></script>
 </body>
 </html>
