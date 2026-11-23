@@ -285,17 +285,25 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // --- TAB 2: AUDITOR ---
-  const btnAuditSnippet = document.getElementById("btn-audit-snippet");
-  const btnAuditPath = document.getElementById("btn-audit-path");
-  const snippetGroup = document.getElementById("snippet-input-group");
-  const pathGroup = document.getElementById("path-input-group");
-  const auditCode = document.getElementById("audit-code");
-  const auditPath = document.getElementById("audit-path");
-  const btnRunAudit = document.getElementById("btn-run-audit");
-  const btnAuditVulnPreset = document.getElementById("btn-audit-vuln-preset");
-  const btnAuditRepoPreset = document.getElementById("btn-audit-repo-preset");
+  // --- TAB 2: AUDITOR (4 INTAKE MODES: GITHUB, UPLOAD, LIVE LINK, SNIPPET) ---
+  const intakeTabs = document.querySelectorAll(".intake-btn");
+  const intakePanels = document.querySelectorAll(".intake-panel");
+
+  intakeTabs.forEach((tab) => {
+    tab.addEventListener("click", () => {
+      const mode = tab.getAttribute("data-intake");
+      intakeTabs.forEach((t) => t.classList.remove("active"));
+      intakePanels.forEach((p) => p.classList.add("hidden"));
+
+      tab.classList.add("active");
+      const targetPanel = document.getElementById(`intake-panel-${mode}`);
+      if (targetPanel) targetPanel.classList.remove("hidden");
+      logTelemetry(`Switched audit intake mode to [${mode.toUpperCase()}]`, "info");
+    });
+  });
+
   const auditLoading = document.getElementById("audit-loading");
+  const auditLoadingText = document.getElementById("audit-loading-text");
   const auditEmpty = document.getElementById("audit-empty");
   const auditResults = document.getElementById("audit-results-content");
   const auditScoreBadge = document.getElementById("audit-score-badge");
@@ -308,32 +316,245 @@ document.addEventListener("DOMContentLoaded", () => {
   const auditLlmAdvice = document.getElementById("audit-llm-advice");
   const btnExportSarif = document.getElementById("btn-export-sarif");
   const btnExportPdf = document.getElementById("btn-export-pdf");
+  const liveTelemetryBanner = document.getElementById("live-telemetry-banner");
 
-  let auditMode = "snippet";
   let lastAuditPayload = null;
+  let selectedUploadFile = null;
 
-  btnAuditSnippet.addEventListener("click", () => {
-    auditMode = "snippet";
-    btnAuditSnippet.classList.add("active");
-    btnAuditPath.classList.remove("active");
-    snippetGroup.classList.remove("hidden");
-    pathGroup.classList.add("hidden");
+  // --- 1. GITHUB REPO AUDIT ---
+  const auditGithubUrl = document.getElementById("audit-github-url");
+  const auditGithubBranch = document.getElementById("audit-github-branch");
+  const btnRunGithubAudit = document.getElementById("btn-run-github-audit");
+
+  document.querySelectorAll(".chip-btn[data-repo]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (auditGithubUrl) auditGithubUrl.value = btn.getAttribute("data-repo");
+    });
   });
 
-  btnAuditPath.addEventListener("click", () => {
-    auditMode = "path";
-    btnAuditPath.classList.add("active");
-    btnAuditSnippet.classList.remove("active");
-    snippetGroup.classList.add("hidden");
-    pathGroup.classList.remove("hidden");
+  if (btnRunGithubAudit) {
+    btnRunGithubAudit.addEventListener("click", async () => {
+      const repoUrl = auditGithubUrl ? auditGithubUrl.value.trim() : "";
+      if (!repoUrl) {
+        showToast("Please enter a valid GitHub repository URL.", "error");
+        return;
+      }
+
+      const branch = auditGithubBranch ? auditGithubBranch.value.trim() : "";
+      const target = branch ? `${repoUrl}#${branch}` : repoUrl;
+      lastAuditPayload = { target_path: target };
+
+      setAuditLoading(true, "Cloning remote Git repository and executing multi-pillar security audit...");
+      logTelemetry(`Initiating remote Git audit: ${target}...`, "info");
+
+      try {
+        const res = await fetch("/api/audit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ target_path: repoUrl })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Repository audit failed");
+        }
+        const data = await res.json();
+        if (liveTelemetryBanner) liveTelemetryBanner.classList.add("hidden");
+        renderAuditResults(data);
+      } catch (err) {
+        showToast("GitHub Audit Error: " + err.message, "error");
+        logTelemetry("GitHub Audit Error: " + err.message, "error");
+      } finally {
+        setAuditLoading(false);
+      }
+    });
+  }
+
+  // --- 2. CODE & ZIP UPLOAD ---
+  const auditDropzone = document.getElementById("audit-dropzone");
+  const auditFileInput = document.getElementById("audit-file-input");
+  const btnBrowseFile = document.getElementById("btn-browse-file");
+  const uploadFilePill = document.getElementById("upload-file-pill");
+  const uploadFileName = document.getElementById("upload-file-name");
+  const uploadFileSize = document.getElementById("upload-file-size");
+  const btnRunUploadAudit = document.getElementById("btn-run-upload-audit");
+
+  function handleFileSelected(file) {
+    if (!file) return;
+    selectedUploadFile = file;
+    if (uploadFileName) uploadFileName.textContent = file.name;
+    if (uploadFileSize) uploadFileSize.textContent = `(${(file.size / 1024).toFixed(1)} KB)`;
+    if (uploadFilePill) uploadFilePill.classList.remove("hidden");
+    if (btnRunUploadAudit) btnRunUploadAudit.disabled = false;
+    showToast(`File selected: ${file.name}`, "info");
+    logTelemetry(`Selected file for audit: ${file.name} (${file.size} bytes)`, "info");
+  }
+
+  if (btnBrowseFile && auditFileInput) {
+    btnBrowseFile.addEventListener("click", (e) => {
+      e.stopPropagation();
+      auditFileInput.click();
+    });
+  }
+  if (auditDropzone && auditFileInput) {
+    auditDropzone.addEventListener("click", () => auditFileInput.click());
+    auditFileInput.addEventListener("change", (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleFileSelected(e.target.files[0]);
+      }
+    });
+
+    ["dragenter", "dragover"].forEach((eventName) => {
+      auditDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        auditDropzone.classList.add("dragover");
+      });
+    });
+
+    ["dragleave", "drop"].forEach((eventName) => {
+      auditDropzone.addEventListener(eventName, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        auditDropzone.classList.remove("dragover");
+      });
+    });
+
+    auditDropzone.addEventListener("drop", (e) => {
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleFileSelected(e.dataTransfer.files[0]);
+      }
+    });
+  }
+
+  if (btnRunUploadAudit) {
+    btnRunUploadAudit.addEventListener("click", async () => {
+      if (!selectedUploadFile) {
+        showToast("Please choose or drop a file first.", "error");
+        return;
+      }
+
+      setAuditLoading(true, `Uploading '${selectedUploadFile.name}', extracting archive & auditing codebase...`);
+      logTelemetry(`Uploading ${selectedUploadFile.name} to sandbox...`, "info");
+
+      const formData = new FormData();
+      formData.append("file", selectedUploadFile);
+
+      try {
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Upload audit failed");
+        }
+        const data = await res.json();
+        lastAuditPayload = { target_path: selectedUploadFile.name };
+        if (liveTelemetryBanner) liveTelemetryBanner.classList.add("hidden");
+        renderAuditResults(data);
+      } catch (err) {
+        showToast("Upload Audit Error: " + err.message, "error");
+        logTelemetry("Upload Audit Error: " + err.message, "error");
+      } finally {
+        setAuditLoading(false);
+      }
+    });
+  }
+
+  // --- 3. DEPLOYED OR LOCAL LINK (LIVE DAST) ---
+  const auditLiveUrl = document.getElementById("audit-live-url");
+  const liveProbeEndpoints = document.getElementById("live-probe-endpoints");
+  const btnRunLiveAudit = document.getElementById("btn-run-live-audit");
+
+  document.querySelectorAll(".chip-btn[data-live]").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      if (auditLiveUrl) auditLiveUrl.value = btn.getAttribute("data-live");
+    });
   });
 
-  btnAuditVulnPreset.addEventListener("click", () => {
-    auditCode.value = `import os
+  if (btnRunLiveAudit) {
+    btnRunLiveAudit.addEventListener("click", async () => {
+      const url = auditLiveUrl ? auditLiveUrl.value.trim() : "";
+      if (!url) {
+        showToast("Please enter a deployed or local URL to scan.", "error");
+        return;
+      }
+
+      const probe = liveProbeEndpoints ? liveProbeEndpoints.checked : true;
+      lastAuditPayload = { target_path: url };
+
+      setAuditLoading(true, `Connecting to ${url}, checking SSL/TLS, probing OWASP security headers & endpoints...`);
+      logTelemetry(`Launching dynamic DAST scan on: ${url}...`, "info");
+
+      try {
+        const res = await fetch("/api/live", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url, probe_endpoints: probe })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Live endpoint scan failed");
+        }
+        const data = await res.json();
+        const live = data.live_scan;
+        const audit = data.audit_result;
+
+        // Render Live Telemetry Overview
+        if (liveTelemetryBanner) {
+          liveTelemetryBanner.classList.remove("hidden");
+          const valStatus = document.getElementById("live-val-status");
+          const valLatency = document.getElementById("live-val-latency");
+          const valSsl = document.getElementById("live-val-ssl");
+          const valServer = document.getElementById("live-val-server");
+
+          if (valStatus) {
+            valStatus.textContent = `${live.status_code} ${live.status_code === 200 ? 'OK' : ''}`;
+            valStatus.className = `live-metric-val ${live.status_code === 200 ? 'badge-status-pass' : 'badge-status-warn'}`;
+          }
+          if (valLatency) {
+            valLatency.textContent = `${live.response_time_ms} ms`;
+            valLatency.className = `live-metric-val ${live.response_time_ms < 500 ? 'badge-status-pass' : 'badge-status-warn'}`;
+          }
+          if (valSsl) {
+            const sslText = live.ssl_info.is_https
+              ? (live.ssl_info.is_valid ? `Valid (${live.ssl_info.tls_version})` : `Invalid / Expired`)
+              : "Unencrypted (HTTP)";
+            valSsl.textContent = sslText;
+            valSsl.className = `live-metric-val ${live.ssl_info.is_valid ? 'badge-status-pass' : 'badge-status-fail'}`;
+          }
+          if (valServer) {
+            valServer.textContent = live.server_header;
+          }
+        }
+
+        renderAuditResults(audit);
+      } catch (err) {
+        showToast("Live Scan Error: " + err.message, "error");
+        logTelemetry("Live Scan Error: " + err.message, "error");
+      } finally {
+        setAuditLoading(false);
+      }
+    });
+  }
+
+  // --- 4. IN-MEMORY SNIPPET AUDIT ---
+  const auditCode = document.getElementById("audit-code");
+  const btnRunSnippetAudit = document.getElementById("btn-run-snippet-audit");
+  const btnAuditVulnPreset = document.getElementById("btn-audit-vuln-preset");
+
+  if (btnAuditVulnPreset && auditCode) {
+    btnAuditVulnPreset.addEventListener("click", () => {
+      auditCode.value = `import os
 import subprocess
+import secrets
+import random
 
 # Insecure Hardcoded AWS Key
 AWS_SECRET_KEY = "AKIA1234567890EXAMPLEKEY"
+
+# Cryptographically Insecure PRNG for security token (CWE-330)
+auth_token = random.random()
 
 def query_user_account(user_id, raw_filter):
     # SQL Injection via string interpolation (CWE-89)
@@ -344,64 +565,60 @@ def query_user_account(user_id, raw_filter):
 
     # Remote Code Execution (CWE-94)
     parsed = eval(raw_filter)
+
+    # Prompt Injection Risk (OWASP LLM01 / CWE-1426)
+    system_prompt = f"You are a helpful assistant. User request: {raw_filter}"
+
     return query
 `;
-  });
-
-  if (btnAuditRepoPreset) {
-    btnAuditRepoPreset.addEventListener("click", () => {
-      auditMode = "path";
-      btnAuditPath.classList.add("active");
-      btnAuditSnippet.classList.remove("active");
-      snippetGroup.classList.add("hidden");
-      pathGroup.classList.remove("hidden");
-      auditPath.value = "https://github.com/mradityasonicse/prodforge";
+      showToast("Vulnerable sample loaded with OWASP 2026 rules!", "info");
     });
   }
 
-  btnRunAudit.addEventListener("click", async () => {
-    const payload = {};
-    if (auditMode === "snippet") {
+  if (btnRunSnippetAudit && auditCode) {
+    btnRunSnippetAudit.addEventListener("click", async () => {
       const code = auditCode.value.trim();
       if (!code) {
-        alert("Please paste code to audit.");
+        showToast("Please enter or paste code to audit.", "error");
         return;
       }
-      payload.raw_code = code;
+
+      lastAuditPayload = { raw_code: code };
+      setAuditLoading(true, "Scanning code snippet for OWASP 2026 vulnerabilities and CWE flaws...");
+      logTelemetry("Auditing in-memory code snippet...", "info");
+
+      try {
+        const res = await fetch("/api/audit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ raw_code: code })
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          throw new Error(err.detail || "Snippet audit failed");
+        }
+        const data = await res.json();
+        if (liveTelemetryBanner) liveTelemetryBanner.classList.add("hidden");
+        renderAuditResults(data);
+      } catch (err) {
+        showToast("Snippet Audit Error: " + err.message, "error");
+        logTelemetry("Snippet Audit Error: " + err.message, "error");
+      } finally {
+        setAuditLoading(false);
+      }
+    });
+  }
+
+  function setAuditLoading(isLoading, message = "") {
+    if (isLoading) {
+      if (auditLoading) auditLoading.classList.remove("hidden");
+      if (auditLoadingText && message) auditLoadingText.textContent = message;
+      if (auditEmpty) auditEmpty.classList.add("hidden");
+      if (auditResults) auditResults.classList.add("hidden");
     } else {
-      const p = auditPath.value.trim();
-      if (!p) {
-        alert("Please enter a local project or file path.");
-        return;
-      }
-      payload.target_path = p;
+      if (auditLoading) auditLoading.classList.add("hidden");
     }
-
-    lastAuditPayload = payload;
-    auditLoading.classList.remove("hidden");
-    auditEmpty.classList.add("hidden");
-    auditResults.classList.add("hidden");
-
-    try {
-      const res = await fetch("/api/audit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || "Audit execution failed");
-      }
-
-      const data = await res.json();
-      renderAuditResults(data);
-    } catch (err) {
-      alert("Audit Error: " + err.message);
-    } finally {
-      auditLoading.classList.add("hidden");
-    }
-  });
+  }
 
   function renderAuditResults(data) {
     auditResults.classList.remove("hidden");

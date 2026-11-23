@@ -145,6 +145,66 @@ SECURITY_RULES = [
         "pattern": r"""^FROM\s+[^\s:]+:latest\b""",
         "description": "Using ':latest' tag produces non-reproducible builds and risks unexpected breaking updates.",
         "remediation": "Pin base images to explicit version tags or sha256 digests (e.g. python:3.12-slim-bookworm)."
+    },
+    {
+        "id": "SEC-011",
+        "cwe": "CWE-330",
+        "owasp": "A02:2021-Cryptographic Failures",
+        "title": "Insecure Pseudo-Random Number Generator for Security Contexts",
+        "severity": "HIGH",
+        "pattern": r"""(?i)(?:(?:token|secret|salt|key|auth|session|nonce|password).*\b(?:random\.random|random\.randint|random\.choice|Math\.random)\s*\(|\b(?:random\.random|random\.randint|random\.choice|Math\.random)\s*\(.*(?:token|secret|salt|key|auth|session|nonce|password))""",
+        "description": "Standard pseudo-random generators (PRNGs) are cryptographically predictable and unsafe for security tokens.",
+        "remediation": "Use cryptographically secure PRNGs: Python 'secrets' module or Web Crypto API 'crypto.getRandomValues()'."
+    },
+    {
+        "id": "SEC-012",
+        "cwe": "CWE-347",
+        "owasp": "A07:2021-Identification and Authentication Failures",
+        "title": "JWT Insecure 'none' Algorithm or Disabled Verification",
+        "severity": "CRITICAL",
+        "pattern": r"""(?i)(?:verify_signature\s*[:=]\s*False|algorithms\s*[:=]\s*\[.*['"]none['"].*\]|options\s*[:=]\s*\{.*['"]verify_signature['"]\s*:\s*False)""",
+        "description": "JWT signature verification is disabled or accepts the 'none' algorithm, allowing unauthenticated token forgery.",
+        "remediation": "Strictly enforce cryptographic verification (RS256, EdDSA, or HS256) and ban 'none' algorithm."
+    },
+    {
+        "id": "SEC-013",
+        "cwe": "CWE-295",
+        "owasp": "A02:2021-Cryptographic Failures",
+        "title": "Disabled TLS/SSL Certificate Validation",
+        "severity": "CRITICAL",
+        "pattern": r"""(?i)(?:verify\s*=\s*False|rejectUnauthorized\s*:\s*false|InsecureSkipVerify\s*:\s*true)""",
+        "description": "TLS/SSL certificate validation is explicitly disabled, leaving connections vulnerable to Man-In-The-Middle (MITM) attacks.",
+        "remediation": "Always enable TLS certificate validation with a trusted CA bundle."
+    },
+    {
+        "id": "LLM-001",
+        "cwe": "CWE-1426",
+        "owasp": "A03:2021-Injection (OWASP LLM01)",
+        "title": "Direct Untrusted Input in LLM Prompt (Prompt Injection Risk)",
+        "severity": "HIGH",
+        "pattern": r"""(?i)(?:system_prompt|prompt)\s*=\s*f?['"].*(?:\{user_input\}|\{user_prompt\}|\{prompt\}|\{query\}|\{input\}).*['"]""",
+        "description": "Direct interpolation of untrusted user input into LLM system prompts without boundary delimiters enables prompt injection.",
+        "remediation": "Use multi-turn role separation (system vs user), XML delimiters (<user_input>...</user_input>), and strict guardrail validation."
+    },
+    {
+        "id": "LLM-002",
+        "cwe": "CWE-1427",
+        "owasp": "A03:2021-Injection (OWASP LLM02)",
+        "title": "Unsanitized Execution of LLM Output",
+        "severity": "CRITICAL",
+        "pattern": r"""(?i)(?:exec|eval|os\.system|subprocess\.(?:call|run|Popen))\s*\(\s*(?:llm_output|ai_response|response\.text|completion)""",
+        "description": "Executing raw LLM generated text directly in the host shell or interpreter allows arbitrary remote code execution via indirect prompt injection.",
+        "remediation": "Never evaluate raw LLM output directly. Enforce strict JSON schema validation, AST safety parsing, and isolated sandboxing."
+    },
+    {
+        "id": "SEC-015",
+        "cwe": "CWE-829",
+        "owasp": "A08:2021-Software and Data Integrity Failures",
+        "title": "Unpinned CI/CD Dependency Branch in Workflow",
+        "severity": "MEDIUM",
+        "pattern": r"""uses:\s*[\w\-\.\/]+@(main|master)\b""",
+        "description": "GitHub Actions workflow references a mutable branch (@main/@master) rather than an immutable commit SHA, enabling supply chain attacks.",
+        "remediation": "Pin all external actions to full 40-character commit SHAs (e.g. actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683)."
     }
 ]
 

@@ -31,6 +31,7 @@ from prodforge.governance import create_default_governance_file
 from prodforge.engines.fixer import auto_fix_target
 from prodforge.engines.k8s_generator import generate_k8s_manifests
 from prodforge.engines.ci_generator import generate_ci_workflows
+from prodforge.engines.live_scanner import scan_live_url, convert_live_scan_to_audit_result
 
 app = typer.Typer(
     name="prodforge",
@@ -238,6 +239,90 @@ def cmd_audit(
 
     if not result.gate_passed:
         console.print(f"\n[bold red]Pipeline failed: Production Readiness Gate was NOT met (Score: {result.readiness_score}, Gate Passed: False).[/]")
+        raise typer.Exit(code=1)
+
+
+@app.command(name="live")
+def cmd_live(
+    url: str = typer.Argument(..., help="Live deployed URL or local server to audit (e.g. https://example.com or http://localhost:8000)"),
+    sarif: Optional[Path] = typer.Option(None, "--sarif", "-s", help="Output OASIS SARIF v2.1.0 file"),
+    html: Optional[Path] = typer.Option(None, "--html", help="Export standalone executive HTML audit dashboard"),
+    pdf: Optional[Path] = typer.Option(None, "--pdf", "-p", help="Export standalone executive PDF audit report"),
+    fail_under: Optional[int] = typer.Option(80, "--fail-under", help="Exit code 1 if DAST Readiness Score is below threshold"),
+    probe: bool = typer.Option(True, "--probe/--no-probe", help="Probe high-risk sensitive paths (.env, .git, actuator, swagger)")
+):
+    """Dynamically scan live web apps, endpoints, SSL/TLS certificates, security headers, and CORS."""
+    with console.status(f"[bold yellow]Executing live dynamic DAST scan on '{url}'...", spinner="dots"):
+        try:
+            live_res = scan_live_url(target_url=url, probe_endpoints=probe)
+            audit_res = convert_live_scan_to_audit_result(live_res)
+        except Exception as exc:
+            console.print(f"[bold red]Live scan error:[/] {exc}")
+            raise typer.Exit(code=1)
+
+    # Score coloring
+    if live_res.dast_score >= 90:
+        score_badge = f"[bold green on black] {live_res.dast_score}/100 - {live_res.readiness_grade} [/]"
+    elif live_res.dast_score >= 75:
+        score_badge = f"[bold yellow on black] {live_res.dast_score}/100 - {live_res.readiness_grade} [/]"
+    else:
+        score_badge = f"[bold red on black] {live_res.dast_score}/100 - {live_res.readiness_grade} [/]"
+
+    console.print(
+        Panel.fit(
+            f"[bold white]Dynamic Web & API Recon Complete[/]\n"
+            f"[dim]Target URL:[/] {live_res.normalized_url}\n"
+            f"[dim]HTTP Status:[/] [cyan]{live_res.status_code}[/] | [dim]Latency:[/] [cyan]{live_res.response_time_ms}ms[/]\n"
+            f"[dim]Server:[/] {live_res.server_header} | [dim]TLS:[/] {live_res.ssl_info.tls_version} ({'Valid' if live_res.ssl_info.is_valid else 'Failed/Unencrypted'})\n"
+            f"[dim]DAST Readiness Score:[/] {score_badge}",
+            title="[bold yellow]PRODFORGE DAST & RECON SHIELD[/]",
+            border_style="yellow"
+        )
+    )
+
+    # Headers Table
+    headers_table = Table(title="OWASP Security Headers Matrix", border_style="dim")
+    headers_table.add_column("Security Header", style="cyan")
+    headers_table.add_column("Status", style="bold")
+    headers_table.add_column("Current Value / Recommendation", style="white")
+
+    for h in live_res.security_headers:
+        status_style = "green" if h.status == "PASS" else ("yellow" if h.status == "WARN" else "red")
+        headers_table.add_row(h.header, f"[{status_style}]{h.status}[/]", h.value or h.recommendation)
+    console.print(headers_table)
+
+    # Findings Table
+    if live_res.findings:
+        findings_table = Table(title=f"Discovered Live Security Vulnerabilities ({len(live_res.findings)})", border_style="red")
+        findings_table.add_column("Severity", style="bold")
+        findings_table.add_column("Rule ID", style="dim")
+        findings_table.add_column("Title", style="white")
+        findings_table.add_column("Remediation", style="green")
+
+        for f in live_res.findings:
+            sev_style = "red bold" if f.severity in ("CRITICAL", "HIGH") else ("yellow" if f.severity == "MEDIUM" else "cyan")
+            findings_table.add_row(f"[{sev_style}]{f.severity}[/]", f.rule_id, f.title, f.remediation)
+        console.print(findings_table)
+    else:
+        console.print("\n[bold green]✓ Zero critical live vulnerabilities or exposed sensitive endpoints detected![/]")
+
+    # Export SARIF
+    if sarif:
+        save_sarif_file(audit_res, sarif)
+        console.print(f"\n[bold green]✓ OASIS SARIF v2.1.0 report saved to:[/] [white underline]{sarif}[/]")
+
+    # Export HTML
+    if html:
+        save_html_report(audit_res, url, html)
+        console.print(f"\n[bold green]✓ Standalone executive HTML report saved to:[/] [white underline]{html}[/]")
+
+    # Export PDF
+    if pdf:
+        pdf_file = generate_pdf_audit_report(audit_res, url, str(pdf))
+        console.print(f"\n[bold green]✓ Standalone executive PDF report saved to:[/] [white underline]{pdf_file}[/]")
+
+    if live_res.dast_score < fail_under:
+        console.print(f"\n[bold red]Pipeline failed: DAST Score ({live_res.dast_score}) is below required threshold ({fail_under}).[/]")
         raise typer.Exit(code=1)
 
 

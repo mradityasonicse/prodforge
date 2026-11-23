@@ -122,33 +122,113 @@
       <div class="bento-grid-2">
         <div class="card interactive-card">
           <div class="card-header">
-            <h3>Target Code / Project Path</h3>
-            <div class="toggle-group">
-              <button class="btn-toggle active" id="btn-audit-snippet">Snippet</button>
-              <button class="btn-toggle" id="btn-audit-path">Git Repo URL / Path</button>
-            </div>
+            <h3>Intelligent Production Audit Intake</h3>
+            <span class="badge">OWASP 2026 Ready</span>
           </div>
           <div class="card-body">
-            <div id="snippet-input-group">
-              <label class="form-label" for="audit-code">Source Code Snippet</label>
-              <textarea id="audit-code" class="input-area code-font" rows="12" placeholder="# Paste your Python, TypeScript, or Node code here..."></textarea>
-            </div>
-            <div id="path-input-group" class="hidden">
-              <label class="form-label" for="audit-path">GitHub Repository URL or Project Path</label>
-              <input type="text" id="audit-path" class="input-text" placeholder="e.g. https://github.com/mradityasonicse/prodforge or D:\my-project">
+            <!-- 4-Option Intake Selector -->
+            <div class="intake-selector">
+              <button class="intake-btn active" data-intake="github" id="intake-tab-github">
+                <span>🌐</span> 1. GitHub Repo
+              </button>
+              <button class="intake-btn" data-intake="upload" id="intake-tab-upload">
+                <span>📦</span> 2. Code Upload
+              </button>
+              <button class="intake-btn" data-intake="live" id="intake-tab-live">
+                <span>🚀</span> 3. Deployed / Local Link
+              </button>
+              <button class="intake-btn" data-intake="snippet" id="intake-tab-snippet">
+                <span>📝</span> 4. Snippet
+              </button>
             </div>
 
-            <div class="action-row">
-              <button class="btn btn-primary" id="btn-run-audit">
-                <span class="btn-icon">🛡️</span> Execute Audit
-              </button>
-              <button class="btn btn-secondary" id="btn-audit-vuln-preset">
-                Load Vulnerable Sample
-              </button>
-              <button class="btn btn-secondary" id="btn-audit-repo-preset">
-                Load GitHub Repo Sample
-              </button>
+            <!-- Option 1: GitHub Repository -->
+            <div id="intake-panel-github" class="intake-panel">
+              <label class="form-label" for="audit-github-url">GitHub Repository URL</label>
+              <input type="text" id="audit-github-url" class="input-text" value="https://github.com/mradityasonicse/prodforge" placeholder="https://github.com/org/repo">
+              
+              <div class="form-row" style="display:flex; gap:0.75rem; margin-top:0.6rem;">
+                <div style="flex:1;">
+                  <label class="form-label" for="audit-github-branch">Branch / Tag (Optional)</label>
+                  <input type="text" id="audit-github-branch" class="input-text" placeholder="main">
+                </div>
+              </div>
+
+              <div class="preset-row">
+                <span class="preset-label">Quick Presets:</span>
+                <button class="chip-btn" data-repo="https://github.com/mradityasonicse/prodforge">mradityasonicse/prodforge</button>
+                <button class="chip-btn" data-repo="https://github.com/fastapi/fastapi">fastapi/fastapi</button>
+                <button class="chip-btn" data-repo="https://github.com/pallets/flask">pallets/flask</button>
+              </div>
+
+              <div class="action-row" style="margin-top:1.25rem;">
+                <button class="btn btn-primary" id="btn-run-github-audit">
+                  <span class="btn-icon">🌐</span> Clone & Audit Repository
+                </button>
+              </div>
             </div>
+
+            <!-- Option 2: Code Upload (.ZIP / Files) -->
+            <div id="intake-panel-upload" class="intake-panel hidden">
+              <input type="file" id="audit-file-input" style="display:none;" accept=".zip,.tar.gz,.py,.js,.ts,.tsx,.go,.rs,.java,.json,.yaml,.yml">
+              
+              <div class="dropzone-container" id="audit-dropzone">
+                <div class="dropzone-icon">📦</div>
+                <div class="dropzone-title">Drop your ZIP archive or code files here</div>
+                <div class="dropzone-desc">Supports .zip projects, single modules (.py, .ts, .go, .rs, .java) or drag-and-drop from your desktop.</div>
+                <button class="btn btn-secondary btn-sm" id="btn-browse-file" type="button" style="margin-top:0.4rem;">Browse Computer</button>
+                <div id="upload-file-pill" class="dropzone-file-info hidden">
+                  <span id="upload-file-name">filename.zip</span>
+                  <span id="upload-file-size" style="font-size:0.75rem; opacity:0.7;">(0 KB)</span>
+                </div>
+              </div>
+
+              <div class="action-row" style="margin-top:1.25rem;">
+                <button class="btn btn-primary" id="btn-run-upload-audit" disabled>
+                  <span class="btn-icon">🛡️</span> Upload & Deep Scan Code
+                </button>
+              </div>
+            </div>
+
+            <!-- Option 3: Deployed or Local Link (Live DAST) -->
+            <div id="intake-panel-live" class="intake-panel hidden">
+              <label class="form-label" for="audit-live-url">Deployed Website or Local Server URL</label>
+              <input type="text" id="audit-live-url" class="input-text" value="http://localhost:8000" placeholder="e.g. https://my-app.com or http://localhost:8000">
+
+              <div class="checkbox-row" style="margin-top:0.75rem;">
+                <input type="checkbox" id="live-probe-endpoints" checked>
+                <label for="live-probe-endpoints">Probe High-Risk Paths (/.env, /.git/config, /swagger.json, /actuator)</label>
+              </div>
+
+              <div class="preset-row">
+                <span class="preset-label">Test Targets:</span>
+                <button class="chip-btn" data-live="http://localhost:8000">Local Studio (http://localhost:8000)</button>
+                <button class="chip-btn" data-live="https://veterans-preventing-define-soviet.trycloudflare.com">Live Public Tunnel</button>
+                <button class="chip-btn" data-live="https://example.com">https://example.com</button>
+              </div>
+
+              <div class="action-row" style="margin-top:1.25rem;">
+                <button class="btn btn-primary" id="btn-run-live-audit">
+                  <span class="btn-icon">⚡</span> Scan Live Web App & API
+                </button>
+              </div>
+            </div>
+
+            <!-- Option 4: In-Memory Snippet -->
+            <div id="intake-panel-snippet" class="intake-panel hidden">
+              <label class="form-label" for="audit-code">Source Code Snippet</label>
+              <textarea id="audit-code" class="input-area code-font" rows="11" placeholder="# Paste your Python, TypeScript, or Node code here..."></textarea>
+              
+              <div class="action-row" style="margin-top:1rem;">
+                <button class="btn btn-primary" id="btn-run-snippet-audit">
+                  <span class="btn-icon">🛡️</span> Audit Snippet
+                </button>
+                <button class="btn btn-secondary" id="btn-audit-vuln-preset">
+                  Load Vulnerable Sample
+                </button>
+              </div>
+            </div>
+
           </div>
         </div>
 
@@ -164,10 +244,30 @@
           <div class="card-body scrollable-body">
             <div id="audit-loading" class="loading-state hidden">
               <div class="spinner"></div>
-              <p>Scanning OWASP Top 10, CWE mappings, Shannon entropy secrets...</p>
+              <p id="audit-loading-text">Scanning OWASP Top 10, CWE mappings, Shannon entropy secrets...</p>
             </div>
 
             <div id="audit-results-content" class="hidden">
+              <!-- Live Telemetry Banner (Visible for Live Web scans) -->
+              <div id="live-telemetry-banner" class="live-telemetry-banner hidden">
+                <div class="live-metric-item">
+                  <span class="live-metric-label">HTTP Status</span>
+                  <span class="live-metric-val" id="live-val-status">200 OK</span>
+                </div>
+                <div class="live-metric-item">
+                  <span class="live-metric-label">Latency (TTFB)</span>
+                  <span class="live-metric-val" id="live-val-latency">42ms</span>
+                </div>
+                <div class="live-metric-item">
+                  <span class="live-metric-label">SSL/TLS Security</span>
+                  <span class="live-metric-val" id="live-val-ssl">Valid (TLSv1.3)</span>
+                </div>
+                <div class="live-metric-item">
+                  <span class="live-metric-label">Server Header</span>
+                  <span class="live-metric-val" id="live-val-server">Uvicorn</span>
+                </div>
+              </div>
+
               <div class="telemetry-grid">
                 <div class="telemetry-pill crit"><span id="tally-crit">0</span> Critical</div>
                 <div class="telemetry-pill high"><span id="tally-high">0</span> High</div>
@@ -190,7 +290,7 @@
 
             <div id="audit-empty" class="empty-state">
               <div class="empty-icon">🛡️</div>
-              <p>Run a deep audit to inspect vulnerabilities, code smells, and compute the 5-Pillar Readiness Index.</p>
+              <p>Choose an intake option above (GitHub Repo, Code Upload, Live Link, or Snippet) to run an enterprise security and production audit.</p>
             </div>
           </div>
         </div>

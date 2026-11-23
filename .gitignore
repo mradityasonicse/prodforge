@@ -39,3 +39,6 @@ k8s-manifests/
 
 *.html
 *.sarif
+*.pdf
+sample_*.md
+

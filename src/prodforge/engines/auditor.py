@@ -246,9 +246,19 @@ def is_git_url(target: str) -> bool:
     if not isinstance(target, str):
         return False
     t = target.strip()
-    if t.startswith(("http://", "https://", "git@", "ssh://", "git://")):
+    if t.startswith(("git@", "ssh://", "git://")):
         return True
-    if t.endswith(".git") or "github.com/" in t or "gitlab.com/" in t or "bitbucket.org/" in t:
+    if t.endswith(".git") or any(h in t.lower() for h in ("github.com/", "gitlab.com/", "bitbucket.org/", "gitea.")):
+        return True
+    return False
+
+
+def is_live_url(target: str) -> bool:
+    """Check if target string represents a live deployed web or API endpoint."""
+    if not isinstance(target, str):
+        return False
+    t = target.strip()
+    if (t.startswith("http://") or t.startswith("https://")) and not is_git_url(t):
         return True
     return False
 
@@ -260,7 +270,13 @@ def audit_code_or_path(
     model: Optional[str] = None,
     fail_under: Optional[int] = None
 ) -> CodeAuditResult:
-    """Audit a remote Git repo, directory, single file, or raw code string with 5-pillar scoring."""
+    """Audit a remote Git repo, live web URL, directory, single file, or raw code string with 5-pillar scoring."""
+    # 0. Check for Live Deployed Web/API URL (Dynamic DAST Scan)
+    if raw_code is None and is_live_url(target):
+        from prodforge.engines.live_scanner import scan_live_url, convert_live_scan_to_audit_result
+        live_res = scan_live_url(target)
+        return convert_live_scan_to_audit_result(live_res)
+
     all_findings: List[FileAuditFinding] = []
     combined_metrics = ComplexityMetrics()
     scanned_count = 0

@@ -1079,3 +1079,179 @@ h4 {
 .log-line.warn { color: #F59E0B; }
 .log-line.error { color: #F87171; }
 
+/* ==========================================================================
+   Intake Option Selector (GitHub / Upload / Live Link / Snippet)
+   ========================================================================== */
+.intake-selector {
+  display: flex;
+  gap: 0.4rem;
+  background: var(--bg-surface);
+  padding: 0.35rem;
+  border-radius: var(--radius-default);
+  border: 1px solid var(--border-subtle);
+  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+}
+
+.intake-btn {
+  flex: 1;
+  min-width: 140px;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-body);
+  font-size: 0.82rem;
+  font-weight: 600;
+  padding: 0.55rem 0.85rem;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  transition: var(--transition);
+}
+
+.intake-btn:hover {
+  color: var(--text-primary);
+  background: rgba(146, 64, 14, 0.06);
+}
+
+.intake-btn.active {
+  background: var(--hn-primary);
+  color: #FFFFFF;
+  border-color: var(--hn-primary);
+  box-shadow: 0 2px 6px rgba(146, 64, 14, 0.25);
+}
+
+/* Upload Dropzone */
+.dropzone-container {
+  border: 2px dashed rgba(146, 64, 14, 0.35);
+  background: var(--bg-surface);
+  border-radius: var(--radius-default);
+  padding: 2.2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+}
+
+.dropzone-container:hover,
+.dropzone-container.dragover {
+  border-color: var(--hn-primary);
+  background: rgba(254, 243, 199, 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(146, 64, 14, 0.10);
+}
+
+.dropzone-icon {
+  font-size: 2.5rem;
+  line-height: 1;
+}
+
+.dropzone-title {
+  font-family: var(--font-headline);
+  font-size: 1.05rem;
+  color: var(--hn-primary);
+  font-weight: 600;
+}
+
+.dropzone-desc {
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+  max-width: 380px;
+}
+
+.dropzone-file-info {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--hn-surface);
+  border: 1px solid var(--border-subtle);
+  padding: 0.5rem 1rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.85rem;
+  color: var(--hn-primary);
+  font-weight: 600;
+  margin-top: 0.5rem;
+}
+
+/* Preset Chips Row */
+.preset-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.65rem;
+  flex-wrap: wrap;
+}
+
+.preset-label {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chip-btn {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  color: var(--hn-primary);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.25rem 0.65rem;
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  transition: var(--transition);
+}
+
+.chip-btn:hover {
+  background: var(--hn-primary);
+  color: #FFFFFF;
+  border-color: var(--hn-primary);
+}
+
+/* Live Telemetry Overview Cards */
+.live-telemetry-banner {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-default);
+  padding: 0.85rem 1.25rem;
+  margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 0.75rem;
+}
+
+.live-metric-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.live-metric-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.live-metric-val {
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.badge-status-pass { color: var(--hn-success); }
+.badge-status-warn { color: var(--hn-warning); }
+.badge-status-fail { color: var(--hn-error); }
+
+

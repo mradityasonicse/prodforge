@@ -6,10 +6,12 @@ Serves REST APIs, WebSocket live execution, and modern Awwwards-grade UI assets.
 from __future__ import annotations
 
 import os
+import shutil
 import tempfile
+import zipfile
 from pathlib import Path
 from typing import Optional, Dict, Any, List
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, UploadFile, File
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
@@ -26,6 +28,7 @@ from prodforge.engines.pdf_reporter import generate_pdf_audit_report
 from prodforge.engines.fixer import auto_fix_target, AutoFixResult
 from prodforge.engines.k8s_generator import generate_k8s_manifests, K8sManifestResult
 from prodforge.engines.ci_generator import generate_ci_workflows, CIWorkflowResult
+from prodforge.engines.live_scanner import scan_live_url, convert_live_scan_to_audit_result, LiveScanResult
 
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -61,6 +64,11 @@ class AuditRequest(BaseModel):
     language: Optional[str] = "python"
     model: Optional[str] = None
     fail_under: Optional[int] = None
+
+
+class LiveScanRequest(BaseModel):
+    url: str
+    probe_endpoints: bool = True
 
 
 class FixRequest(BaseModel):
@@ -153,6 +161,61 @@ def api_audit(req: AuditRequest) -> CodeAuditResult:
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/live")
+def api_live(req: LiveScanRequest) -> Dict[str, Any]:
+    """Execute live DAST security scan on deployed website, web app, or local server."""
+    if not req.url.strip():
+        raise HTTPException(status_code=400, detail="Target URL cannot be empty.")
+    try:
+        live_res = scan_live_url(target_url=req.url, probe_endpoints=req.probe_endpoints)
+        audit_res = convert_live_scan_to_audit_result(live_res)
+        return {
+            "live_scan": live_res.model_dump(),
+            "audit_result": audit_res.model_dump()
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/upload")
+async def api_upload(file: UploadFile = File(...)) -> CodeAuditResult:
+    """Upload and audit a ZIP archive or standalone source code file."""
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="No file uploaded.")
+    filename = file.filename.lower()
+    tmp_dir = tempfile.mkdtemp(prefix="prodforge_upload_")
+    try:
+        tmp_file_path = Path(tmp_dir) / file.filename
+        content = await file.read()
+        with open(tmp_file_path, "wb") as f:
+            f.write(content)
+
+        if filename.endswith(".zip"):
+            extract_dir = Path(tmp_dir) / "extracted"
+            extract_dir.mkdir(parents=True, exist_ok=True)
+            with zipfile.ZipFile(tmp_file_path, "r") as z:
+                for member in z.infolist():
+                    # ZipSlip protection: prevent path traversal attacks
+                    target_member_path = (extract_dir / member.filename).resolve()
+                    if not str(target_member_path).startswith(str(extract_dir.resolve())):
+                        raise HTTPException(status_code=400, detail="Malicious path traversal detected in ZIP archive.")
+                z.extractall(extract_dir)
+            res = audit_code_or_path(target=str(extract_dir))
+            res.target_path = file.filename
+            return res
+        else:
+            # Standalone file
+            res = audit_code_or_path(target=str(tmp_file_path))
+            res.target_path = file.filename
+            return res
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+    finally:
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
 
 @app.post("/api/sarif")

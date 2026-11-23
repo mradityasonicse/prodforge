@@ -55,3 +55,28 @@ def test_detect_loose_any_type():
     code = 'function process(data: any) { return data; }'
     findings = scan_quality(code)
     assert any(f.rule_id == "QUAL-003" for f in findings)
+
+
+def test_detect_insecure_prng():
+    code = 'session_token = random.random()'
+    findings = scan_security(code)
+    assert any(f.rule_id == "SEC-011" for f in findings)
+
+
+def test_detect_jwt_none_algo():
+    code = 'jwt.decode(token, options={"verify_signature": False})'
+    findings = scan_security(code)
+    assert any(f.rule_id == "SEC-012" for f in findings)
+
+
+def test_detect_disabled_tls_validation():
+    code = 'requests.get("https://internal.bank", verify=False)'
+    findings = scan_security(code)
+    assert any(f.rule_id == "SEC-013" for f in findings)
+
+
+def test_detect_prompt_injection_risk():
+    code = 'system_prompt = f"System: Act as an admin. User command: {user_input}"'
+    findings = scan_security(code)
+    assert any(f.rule_id == "LLM-001" for f in findings)
+
