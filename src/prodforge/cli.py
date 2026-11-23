@@ -26,6 +26,7 @@ from prodforge.engines.hardener import generate_production_hardening
 from prodforge.engines.feasibility import analyze_feasibility
 from prodforge.engines.sarif_exporter import save_sarif_file
 from prodforge.engines.html_reporter import save_html_report
+from prodforge.engines.pdf_reporter import generate_pdf_audit_report
 from prodforge.governance import create_default_governance_file
 from prodforge.engines.fixer import auto_fix_target
 from prodforge.engines.k8s_generator import generate_k8s_manifests
@@ -74,6 +75,7 @@ def cmd_audit(
     target: str = typer.Argument(..., help="Path to source file or project directory to audit"),
     sarif: Optional[Path] = typer.Option(None, "--sarif", "-s", help="Output OASIS SARIF v2.1.0 file for GitHub Code Scanning"),
     html: Optional[Path] = typer.Option(None, "--html", help="Export standalone executive HTML audit dashboard"),
+    pdf: Optional[Path] = typer.Option(None, "--pdf", "-p", help="Export standalone executive PDF audit report"),
     fail_under: Optional[int] = typer.Option(None, "--fail-under", help="Exit with code 1 if Production Readiness Index is below threshold"),
     out: Optional[Path] = typer.Option(None, "--out", "-o", help="Export audit report to markdown file"),
     model: Optional[str] = typer.Option(None, "--model", "-m", help="Override active LLM model")
@@ -199,6 +201,11 @@ def cmd_audit(
     if html:
         save_html_report(result, target, html)
         console.print(f"\n[bold green]✓ Standalone executive HTML report saved to:[/] [white underline]{html}[/]")
+
+    # Export Executive PDF dashboard if requested
+    if pdf:
+        pdf_file = generate_pdf_audit_report(result, target, str(pdf))
+        console.print(f"\n[bold green]✓ Standalone executive PDF report saved to:[/] [white underline]{pdf_file}[/]")
 
     if out:
         report_md = f"""# ProdForge Code Audit Report: {target}

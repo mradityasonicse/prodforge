@@ -158,6 +158,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const findingsList = document.getElementById("findings-list");
   const auditLlmAdvice = document.getElementById("audit-llm-advice");
   const btnExportSarif = document.getElementById("btn-export-sarif");
+  const btnExportPdf = document.getElementById("btn-export-pdf");
 
   let auditMode = "snippet";
   let lastAuditPayload = null;
@@ -369,6 +370,40 @@ def query_user_account(user_id, raw_filter):
       alert("SARIF export error: " + err.message);
     }
   });
+
+  if (btnExportPdf) {
+    btnExportPdf.addEventListener("click", async () => {
+      if (!lastAuditPayload) {
+        alert("Please execute an audit first to export PDF.");
+        return;
+      }
+      btnExportPdf.textContent = "⏳ Generating PDF...";
+      btnExportPdf.disabled = true;
+      try {
+        const res = await fetch("/api/pdf", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(lastAuditPayload)
+        });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.detail || "Failed to generate PDF report");
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "prodforge-audit-report.pdf";
+        a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        alert("PDF export error: " + err.message);
+      } finally {
+        btnExportPdf.textContent = "📄 Export PDF";
+        btnExportPdf.disabled = false;
+      }
+    });
+  }
 
   // --- TAB 3: AUTO-FIXER ---
   const btnRunFix = document.getElementById("btn-run-fix");

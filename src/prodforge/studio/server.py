@@ -6,6 +6,7 @@ Serves REST APIs, WebSocket live execution, and modern Awwwards-grade UI assets.
 from __future__ import annotations
 
 import os
+import tempfile
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
@@ -21,6 +22,7 @@ from prodforge.engines.qa_tester import generate_test_suite, TestSuiteResult
 from prodforge.engines.hardener import generate_production_hardening, HardeningResult
 from prodforge.engines.feasibility import analyze_feasibility, FeasibilityResult
 from prodforge.engines.sarif_exporter import export_to_sarif
+from prodforge.engines.pdf_reporter import generate_pdf_audit_report
 from prodforge.engines.fixer import auto_fix_target, AutoFixResult
 from prodforge.engines.k8s_generator import generate_k8s_manifests, K8sManifestResult
 from prodforge.engines.ci_generator import generate_ci_workflows, CIWorkflowResult
@@ -165,6 +167,26 @@ def api_sarif(req: AuditRequest) -> Dict[str, Any]:
             model=req.model
         )
         return export_to_sarif(audit_res)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/pdf")
+def api_pdf(req: AuditRequest):
+    if not req.target_path and not req.raw_code:
+        raise HTTPException(status_code=400, detail="Must provide either target_path or raw_code.")
+    try:
+        audit_res = audit_code_or_path(
+            target=req.target_path or "<in-memory>",
+            raw_code=req.raw_code,
+            language=req.language or "python",
+            model=req.model
+        )
+        with tempfile.NamedTemporaryFile("w", suffix=".pdf", delete=False) as tmp:
+            tmp_pdf_path = tmp.name
+
+        generate_pdf_audit_report(audit_res, req.target_path or "code_snippet", tmp_pdf_path)
+        return FileResponse(tmp_pdf_path, media_type="application/pdf", filename="prodforge-audit-report.pdf")
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
