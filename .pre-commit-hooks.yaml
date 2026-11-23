@@ -1,0 +1,7 @@
+- id: prodforge-audit
+  name: ProdForge Production Gate
+  description: Autonomous 5-pillar production readiness audit & OWASP vulnerability scan
+  entry: prodforge audit
+  language: python
+  types: [text]
+  pass_filenames: false

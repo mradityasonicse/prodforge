@@ -3,18 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ProdForge Studio — Autonomous Production AI Suite</title>
+  <title>ProdForge Studio — Enterprise Production AI Suite</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <!-- Mermaid.js for real-time C4 and architecture rendering -->
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
-  <!-- Marked for markdown rendering -->
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <link rel="stylesheet" href="/static/styles.css">
 </head>
 <body>
-  <!-- Ambient background glow layers (Monochrome depth, subtle cyan/emerald) -->
   <div class="ambient-glow glow-1"></div>
   <div class="ambient-glow glow-2"></div>
 
@@ -25,22 +22,25 @@
         <span class="logo-symbol">⚡</span>
         <span class="brand-name">Prod<span class="brand-accent">Forge</span></span>
       </div>
-      <span class="version-tag">v1.0.0 PROD-READY</span>
+      <span class="version-tag">ENTERPRISE EDITION v1.0</span>
     </div>
 
     <div class="header-center">
       <nav class="nav-tabs">
         <button class="nav-tab active" data-tab="plan">
-          <span class="tab-icon">📐</span> Architecture & Plan
+          <span class="tab-icon">📐</span> Architecture
         </button>
         <button class="nav-tab" data-tab="audit">
           <span class="tab-icon">🛡️</span> Code Auditor
         </button>
+        <button class="nav-tab" data-tab="fix">
+          <span class="tab-icon">🩹</span> Auto-Fixer
+        </button>
         <button class="nav-tab" data-tab="test">
-          <span class="tab-icon">🧪</span> QA Test Suite
+          <span class="tab-icon">🧪</span> QA Tests
         </button>
         <button class="nav-tab" data-tab="harden">
-          <span class="tab-icon">🚀</span> Hardener
+          <span class="tab-icon">🚀</span> Containers & K8s
         </button>
         <button class="nav-tab" data-tab="feasibility">
           <span class="tab-icon">📊</span> FinOps & Scale
@@ -63,10 +63,9 @@
     <!-- TAB 1: PLANNER & ARCHITECTURE -->
     <section class="tab-panel active" id="tab-plan">
       <div class="bento-grid-2">
-        <!-- Input Card -->
         <div class="card interactive-card">
           <div class="card-header">
-            <h3>System Specification & Idea</h3>
+            <h3>System Specification & Requirements</h3>
             <span class="badge">Input</span>
           </div>
           <div class="card-body">
@@ -87,7 +86,6 @@
           </div>
         </div>
 
-        <!-- Telemetry / Diagram Preview Card -->
         <div class="card output-card">
           <div class="card-header">
             <h3>Architecture Blueprint & C4 Model</h3>
@@ -108,7 +106,7 @@
             <div id="plan-markdown-output" class="markdown-output">
               <div class="empty-state">
                 <div class="empty-icon">📐</div>
-                <p>Enter your product or system idea to generate a production-ready C4 blueprint, database schema, STRIDE threat analysis, and phased roadmap.</p>
+                <p>Enter your product idea to generate a production-ready C4 blueprint, database schema, STRIDE threat analysis, and phased roadmap.</p>
               </div>
             </div>
           </div>
@@ -119,7 +117,6 @@
     <!-- TAB 2: CODE AUDITOR -->
     <section class="tab-panel" id="tab-audit">
       <div class="bento-grid-2">
-        <!-- Code Input Card -->
         <div class="card interactive-card">
           <div class="card-header">
             <h3>Target Code / Project Path</h3>
@@ -140,7 +137,7 @@
 
             <div class="action-row">
               <button class="btn btn-primary" id="btn-run-audit">
-                <span class="btn-icon">🛡️</span> Execute Production Audit
+                <span class="btn-icon">🛡️</span> Execute Audit
               </button>
               <button class="btn btn-secondary" id="btn-audit-vuln-preset">
                 Load Vulnerable Sample
@@ -149,20 +146,21 @@
           </div>
         </div>
 
-        <!-- Audit Findings & Readiness Score Card -->
         <div class="card output-card">
           <div class="card-header">
-            <h3>Production Readiness Scorecard</h3>
-            <div class="score-badge-large" id="audit-score-badge">--/100</div>
+            <h3>Production Readiness Scorecard (PRI)</h3>
+            <div class="card-actions">
+              <div class="score-badge-large" id="audit-score-badge">--/100</div>
+              <button class="btn-sm" id="btn-export-sarif">Export SARIF 2.1.0</button>
+            </div>
           </div>
           <div class="card-body scrollable-body">
             <div id="audit-loading" class="loading-state hidden">
               <div class="spinner"></div>
-              <p>Scanning OWASP Top 10, detecting secrets, evaluating AST complexity...</p>
+              <p>Scanning OWASP Top 10, CWE mappings, Shannon entropy secrets...</p>
             </div>
 
             <div id="audit-results-content" class="hidden">
-              <!-- Score Metres & Tallies -->
               <div class="telemetry-grid">
                 <div class="telemetry-pill crit"><span id="tally-crit">0</span> Critical</div>
                 <div class="telemetry-pill high"><span id="tally-high">0</span> High</div>
@@ -170,25 +168,70 @@
                 <div class="telemetry-pill low"><span id="tally-low">0</span> Low</div>
               </div>
 
+              <!-- 5-Pillar Scorecard -->
+              <h4 class="section-title">5-Pillar Readiness Index</h4>
+              <div id="pillars-container" class="table-wrapper"></div>
+
               <!-- Findings List -->
-              <h4 class="section-title">Discovered Findings & Remediation</h4>
+              <h4 class="section-title">Discovered Findings & CWE Remediations</h4>
               <div id="findings-list" class="findings-container"></div>
 
               <!-- LLM Advice -->
-              <h4 class="section-title">Architectural Hardening Plan</h4>
+              <h4 class="section-title">Enterprise Hardening Plan</h4>
               <div id="audit-llm-advice" class="markdown-output small-text"></div>
             </div>
 
             <div id="audit-empty" class="empty-state">
               <div class="empty-icon">🛡️</div>
-              <p>Run a deep audit to inspect vulnerabilities, code quality smells, and calculate the Production Readiness Score.</p>
+              <p>Run a deep audit to inspect vulnerabilities, code smells, and compute the 5-Pillar Readiness Index.</p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- TAB 3: QA TEST SUITE -->
+    <!-- TAB 3: AUTO-FIXER & HEALING -->
+    <section class="tab-panel" id="tab-fix">
+      <div class="bento-grid-2">
+        <div class="card interactive-card">
+          <div class="card-header">
+            <h3>Target File / Project to Repair</h3>
+            <span class="badge">Self-Healing</span>
+          </div>
+          <div class="card-body">
+            <label class="form-label" for="fix-target-path">Target File or Directory Path</label>
+            <input type="text" id="fix-target-path" class="input-text" value="D:\prodforge">
+
+            <div class="checkbox-row">
+              <input type="checkbox" id="fix-apply-checkbox">
+              <label for="fix-apply-checkbox">Apply changes directly to files (in-place repair + write to .env)</label>
+            </div>
+
+            <div class="action-row">
+              <button class="btn btn-primary" id="btn-run-fix">
+                <span class="btn-icon">🩹</span> Generate Auto-Fix & Patch
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card output-card">
+          <div class="card-header">
+            <h3>Unified Git Patch Diff</h3>
+            <button class="btn-sm" id="btn-copy-patch">Copy Patch</button>
+          </div>
+          <div class="card-body scrollable-body">
+            <div id="fix-loading" class="loading-state hidden">
+              <div class="spinner"></div>
+              <p>Analyzing vulnerabilities, extracting secrets to .env, refactoring calls...</p>
+            </div>
+            <pre id="fix-patch-output" class="code-block code-font">// Unified diff will appear here...</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: QA TEST SUITE -->
     <section class="tab-panel" id="tab-test">
       <div class="bento-grid-2">
         <div class="card interactive-card">
@@ -238,26 +281,27 @@
       </div>
     </section>
 
-    <!-- TAB 4: PRODUCTION HARDENER -->
+    <!-- TAB 5: CONTAINERS & KUBERNETES -->
     <section class="tab-panel" id="tab-harden">
       <div class="bento-grid-2">
         <div class="card interactive-card">
           <div class="card-header">
-            <h3>Project Containerization & CI/CD</h3>
-            <span class="badge">DevSecOps</span>
+            <h3>Production Infrastructure & K8s</h3>
+            <span class="badge">Cloud-Native</span>
           </div>
           <div class="card-body">
-            <label class="form-label" for="harden-path">Project Root Directory</label>
-            <input type="text" id="harden-path" class="input-text" value="D:\prodforge">
+            <label class="form-label" for="k8s-app-name">Application Name</label>
+            <input type="text" id="k8s-app-name" class="input-text" value="prodforge-app">
 
-            <div class="checkbox-row">
-              <input type="checkbox" id="harden-apply">
-              <label for="harden-apply">Apply directly to disk (writes Dockerfile, compose, and CI workflows)</label>
-            </div>
+            <label class="form-label" for="k8s-domain">Ingress Domain</label>
+            <input type="text" id="k8s-domain" class="input-text" value="api.example.com">
 
             <div class="action-row">
-              <button class="btn btn-primary" id="btn-run-harden">
-                <span class="btn-icon">🚀</span> Generate Hardening Suite
+              <button class="btn btn-primary" id="btn-run-k8s">
+                <span class="btn-icon">☸️</span> Generate Kubernetes Suite
+              </button>
+              <button class="btn btn-secondary" id="btn-run-harden">
+                Generate Dockerfile
               </button>
             </div>
           </div>
@@ -265,18 +309,18 @@
 
         <div class="card output-card">
           <div class="card-header">
-            <h3>Generated Artifacts</h3>
-            <span class="badge" id="harden-stack-badge">DETECTING...</span>
+            <h3>Kubernetes & Docker Artifacts</h3>
+            <span class="badge">Restricted Pod Security</span>
           </div>
           <div class="card-body scrollable-body">
             <div id="harden-loading" class="loading-state hidden">
               <div class="spinner"></div>
-              <p>Generating multi-stage non-root Dockerfile, compose, CI/CD gates, healthchecks...</p>
+              <p>Synthesizing deployment, service, HPA, NetworkPolicy, TLS ingress...</p>
             </div>
             <div id="harden-artifacts-container">
               <div class="empty-state">
-                <div class="empty-icon">🚀</div>
-                <p>Click "Generate Hardening Suite" to generate multi-stage containers, Docker Compose, CI/CD pipelines, and healthcheck routers.</p>
+                <div class="empty-icon">☸️</div>
+                <p>Generate enterprise-grade Kubernetes manifests with Pod Security Restricted standards and TLS Ingress.</p>
               </div>
             </div>
           </div>
@@ -284,7 +328,7 @@
       </div>
     </section>
 
-    <!-- TAB 5: FINOPS & FEASIBILITY -->
+    <!-- TAB 6: FINOPS & FEASIBILITY -->
     <section class="tab-panel" id="tab-feasibility">
       <div class="bento-grid-2">
         <div class="card interactive-card">
@@ -315,7 +359,7 @@
           <div class="card-body scrollable-body">
             <div id="feas-loading" class="loading-state hidden">
               <div class="spinner"></div>
-              <p>Calculating peak RPS, compute allocations, database connection limits, FinOps models...</p>
+              <p>Calculating peak RPS, compute allocations, database connection limits...</p>
             </div>
             <div id="feas-results-container" class="hidden">
               <div class="telemetry-grid">

@@ -31,3 +31,8 @@ htmlcov/
 .DS_Store
 Thumbs.db
 *.log
+
+# Generated Audit Reports & Manifests
+*.sarif
+audit-report.html
+k8s-manifests/

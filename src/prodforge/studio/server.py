@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Optional, Dict, Any, List
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
@@ -20,6 +20,10 @@ from prodforge.engines.auditor import audit_code_or_path, CodeAuditResult
 from prodforge.engines.qa_tester import generate_test_suite, TestSuiteResult
 from prodforge.engines.hardener import generate_production_hardening, HardeningResult
 from prodforge.engines.feasibility import analyze_feasibility, FeasibilityResult
+from prodforge.engines.sarif_exporter import export_to_sarif
+from prodforge.engines.fixer import auto_fix_target, AutoFixResult
+from prodforge.engines.k8s_generator import generate_k8s_manifests, K8sManifestResult
+from prodforge.engines.ci_generator import generate_ci_workflows, CIWorkflowResult
 
 STATIC_DIR = Path(__file__).parent / "static"
 
@@ -54,6 +58,12 @@ class AuditRequest(BaseModel):
     raw_code: Optional[str] = None
     language: Optional[str] = "python"
     model: Optional[str] = None
+    fail_under: Optional[int] = None
+
+
+class FixRequest(BaseModel):
+    target_path: str
+    apply: bool = False
 
 
 class TestRequest(BaseModel):
@@ -73,6 +83,19 @@ class FeasibilityRequest(BaseModel):
     idea: str
     target_dau: int = 50000
     model: Optional[str] = None
+
+
+class K8sRequest(BaseModel):
+    app_name: str = "prodforge-app"
+    namespace: str = "production"
+    domain: str = "api.example.com"
+    image: str = "ghcr.io/org/app:v1.0.0"
+
+
+class CIRequest(BaseModel):
+    min_score: int = 85
+    project_dir: str = "."
+    apply: bool = False
 
 
 # --- Endpoints ---
@@ -123,8 +146,33 @@ def api_audit(req: AuditRequest) -> CodeAuditResult:
             target=req.target_path or "<in-memory>",
             raw_code=req.raw_code,
             language=req.language or "python",
+            model=req.model,
+            fail_under=req.fail_under
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/sarif")
+def api_sarif(req: AuditRequest) -> Dict[str, Any]:
+    if not req.target_path and not req.raw_code:
+        raise HTTPException(status_code=400, detail="Must provide either target_path or raw_code.")
+    try:
+        audit_res = audit_code_or_path(
+            target=req.target_path or "<in-memory>",
+            raw_code=req.raw_code,
+            language=req.language or "python",
             model=req.model
         )
+        return export_to_sarif(audit_res)
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/fix")
+def api_fix(req: FixRequest) -> AutoFixResult:
+    try:
+        return auto_fix_target(target=req.target_path, apply=req.apply)
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))
 
@@ -165,6 +213,31 @@ def api_feasibility(req: FeasibilityRequest) -> FeasibilityResult:
             idea=req.idea,
             target_dau=req.target_dau,
             model=req.model
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/k8s")
+def api_k8s(req: K8sRequest) -> K8sManifestResult:
+    try:
+        return generate_k8s_manifests(
+            app_name=req.app_name,
+            namespace=req.namespace,
+            domain=req.domain,
+            container_image=req.image
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc))
+
+
+@app.post("/api/ci")
+def api_ci(req: CIRequest) -> CIWorkflowResult:
+    try:
+        return generate_ci_workflows(
+            min_score=req.min_score,
+            project_dir=Path(req.project_dir),
+            apply=req.apply
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=str(exc))

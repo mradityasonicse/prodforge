@@ -1,0 +1,48 @@
+# ==============================================================================
+# ProdForge Enterprise Governance & Quality Gate Policy
+# https://github.com/mradityasonicse/prodforge
+# ==============================================================================
+version: "1.0"
+
+# 1. CI/CD Gate Threshold
+# Minimum Production Readiness Index (0-100) required to pass builds & PR checks.
+threshold: 80
+
+# Fail pipeline immediately if any CRITICAL vulnerability (CWE-798, CWE-89, CWE-94) is found.
+fail_on_critical: true
+
+# Fail pipeline if HIGH severity issues are detected.
+fail_on_high: false
+
+# 2. Ignored Rules
+# Suppress specific rule IDs organization-wide if they conflict with your stack.
+ignore_rules:
+  - QUAL-002  # Console log / debug prints
+
+# 3. Excluded Paths
+# Directories and glob patterns to exclude from automated security audits.
+ignore_paths:
+  - "tests/**"
+  - "test/**"
+  - "fixtures/**"
+  - "dist/**"
+  - "build/**"
+  - "node_modules/**"
+  - ".git/**"
+  - "__pycache__/**"
+  - "*.min.js"
+  - "venv/**"
+  - ".venv/**"
+
+# 4. Whitelisted Test Credentials
+# Regex patterns for mock or test credentials used in integration tests.
+allowed_secrets:
+  - "test_secret_.*"
+  - "mock_token_.*"
+
+# 5. Regulatory Compliance Frameworks Evaluated
+compliance_frameworks:
+  - "OWASP Top 10 (2021)"
+  - "SOC2 Type II (CC6.1 - CC6.8)"
+  - "HIPAA Security Rule (§164.312)"
+  - "PCI-DSS v4.0 (Requirement 6)"

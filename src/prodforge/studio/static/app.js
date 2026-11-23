@@ -1,6 +1,5 @@
-// ProdForge Studio - Frontend Interactive Controller
+// ProdForge Studio - Enterprise Frontend Interactive Controller
 document.addEventListener("DOMContentLoaded", () => {
-  // Initialize Mermaid
   if (window.mermaid) {
     mermaid.initialize({
       startOnLoad: false,
@@ -34,7 +33,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // --- INITIAL STATUS CHECK ---
   fetchStatus();
 
   async function fetchStatus() {
@@ -77,8 +75,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentPlanMarkdown = "";
 
   btnPlanPreset.addEventListener("click", () => {
-    planIdea.value = "Autonomous multi-currency crypto & fiat payment settlement gateway with idempotency keys, double-entry ledger in PostgreSQL, sub-second WebSocket order updates, and Redis distributed lock.";
-    planConstraints.value = "FastAPI (Python), PostgreSQL, Redis, Docker, Zero-Trust TLS 1.3, STRIDE threat model";
+    planIdea.value = "Enterprise multi-currency payment settlement gateway with idempotency keys, double-entry ledger in PostgreSQL, sub-second WebSocket order updates, and Redis distributed lock.";
+    planConstraints.value = "FastAPI (Python), PostgreSQL, Redis, Docker, Kubernetes, Zero-Trust TLS 1.3, STRIDE threat model";
   });
 
   btnRunPlan.addEventListener("click", async () => {
@@ -113,7 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
       planScorePill.textContent = `Feasibility: ${data.feasibility_score}/100`;
       planMarkdownOutput.innerHTML = window.marked ? marked.parse(data.markdown_report) : `<pre>${data.markdown_report}</pre>`;
 
-      // Render Mermaid if diagram exists
       if (data.mermaid_diagram && window.mermaid) {
         planDiagramBox.classList.remove("hidden");
         const uniqueId = `mermaid-${Date.now()}`;
@@ -156,10 +153,13 @@ document.addEventListener("DOMContentLoaded", () => {
   const tallyHigh = document.getElementById("tally-high");
   const tallyMed = document.getElementById("tally-med");
   const tallyLow = document.getElementById("tally-low");
+  const pillarsContainer = document.getElementById("pillars-container");
   const findingsList = document.getElementById("findings-list");
   const auditLlmAdvice = document.getElementById("audit-llm-advice");
+  const btnExportSarif = document.getElementById("btn-export-sarif");
 
   let auditMode = "snippet";
+  let lastAuditPayload = null;
 
   btnAuditSnippet.addEventListener("click", () => {
     auditMode = "snippet";
@@ -181,21 +181,17 @@ document.addEventListener("DOMContentLoaded", () => {
     auditCode.value = `import os
 import subprocess
 
-# Insecure Hardcoded API Key Exposure
+# Insecure Hardcoded AWS Key
 AWS_SECRET_KEY = "AKIA1234567890EXAMPLEKEY"
 
-def execute_user_query(user_id, raw_filter):
-    # SQL Injection via string interpolation
+def query_user_account(user_id, raw_filter):
+    # SQL Injection via string interpolation (CWE-89)
     query = f"SELECT * FROM accounts WHERE id = {user_id} AND name = '{raw_filter}'"
-    print(f"Executing: {query}")  # Dirty print in production
 
-    try:
-        # Command Injection risk
-        subprocess.call(f"backup.sh {user_id}", shell=True)
-    except:
-        pass  # Blind silent error swallowing
+    # Command Injection (CWE-78)
+    subprocess.call(f"backup.sh {user_id}", shell=True)
 
-    # Dangerous eval
+    # Remote Code Execution (CWE-94)
     parsed = eval(raw_filter)
     return query
 `;
@@ -219,6 +215,7 @@ def execute_user_query(user_id, raw_filter):
       payload.target_path = p;
     }
 
+    lastAuditPayload = payload;
     auditLoading.classList.remove("hidden");
     auditEmpty.classList.add("hidden");
     auditResults.classList.add("hidden");
@@ -264,6 +261,54 @@ def execute_user_query(user_id, raw_filter):
     tallyMed.textContent = data.medium_count;
     tallyLow.textContent = data.low_count;
 
+    // Render 5-Pillar Scorecard
+    if (data.pillars) {
+      const p = data.pillars;
+      pillarsContainer.innerHTML = `<table>
+        <thead>
+          <tr>
+            <th>Production Dimension</th>
+            <th>Weight</th>
+            <th>Score</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>1. Security & Vulnerability Shield</strong></td>
+            <td>35%</td>
+            <td style="color:${p.security_score >= 80 ? 'var(--accent-emerald)' : 'var(--accent-rose)'}; font-weight:bold;">${p.security_score}/100</td>
+            <td>${p.security_score >= 80 ? 'Verified Shield' : 'Vulnerabilities Discovered'}</td>
+          </tr>
+          <tr>
+            <td><strong>2. Code Quality & Technical Debt</strong></td>
+            <td>20%</td>
+            <td style="color:var(--accent-cyan); font-weight:bold;">${p.quality_score}/100</td>
+            <td>${p.quality_score >= 80 ? 'Clean Code' : 'Smells Detected'}</td>
+          </tr>
+          <tr>
+            <td><strong>3. Architecture & Complexity</strong></td>
+            <td>15%</td>
+            <td style="color:var(--accent-cyan); font-weight:bold;">${p.architecture_score}/100</td>
+            <td>${p.architecture_score >= 80 ? 'Low Complexity' : 'High Branching'}</td>
+          </tr>
+          <tr>
+            <td><strong>4. QA & Test Automation</strong></td>
+            <td>15%</td>
+            <td style="color:var(--accent-cyan); font-weight:bold;">${p.test_readiness_score}/100</td>
+            <td>${p.test_readiness_score >= 80 ? 'Tests Verified' : 'Coverage Needed'}</td>
+          </tr>
+          <tr>
+            <td><strong>5. DevOps & Container Hardening</strong></td>
+            <td>15%</td>
+            <td style="color:var(--accent-cyan); font-weight:bold;">${p.devops_hardening_score}/100</td>
+            <td>${p.devops_hardening_score >= 80 ? 'Production Containers' : 'Hardening Recommended'}</td>
+          </tr>
+        </tbody>
+      </table>`;
+    }
+
+    // Render Findings List
     findingsList.innerHTML = "";
     if (data.findings && data.findings.length > 0) {
       data.findings.forEach(f => {
@@ -275,7 +320,7 @@ def execute_user_query(user_id, raw_filter):
             <span class="finding-loc">Line ${f.line_number}</span>
           </div>
           <div class="finding-desc">${f.description}</div>
-          ${f.line_content ? `<pre class="code-font" style="margin-bottom:0.4rem; font-size:0.75rem; color:#F87171;">${f.line_content}</pre>` : ''}
+          ${f.line_content ? `<pre class="code-font" style="margin-bottom:0.4rem; font-size:0.75rem; color:#F87171;">${escapeHtml(f.line_content)}</pre>` : ''}
           <div class="finding-fix"><strong>Remediation:</strong> ${f.remediation}</div>
         `;
         findingsList.appendChild(item);
@@ -289,7 +334,84 @@ def execute_user_query(user_id, raw_filter):
     }
   }
 
-  // --- TAB 3: QA TEST SUITE ---
+  btnExportSarif.addEventListener("click", async () => {
+    if (!lastAuditPayload) {
+      alert("Please execute an audit first to export SARIF.");
+      return;
+    }
+    try {
+      const res = await fetch("/api/sarif", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(lastAuditPayload)
+      });
+      const sarifData = await res.json();
+      const blob = new Blob([JSON.stringify(sarifData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "prodforge.sarif";
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      alert("SARIF export error: " + err.message);
+    }
+  });
+
+  // --- TAB 3: AUTO-FIXER ---
+  const btnRunFix = document.getElementById("btn-run-fix");
+  const fixTargetPath = document.getElementById("fix-target-path");
+  const fixApplyCheckbox = document.getElementById("fix-apply-checkbox");
+  const fixLoading = document.getElementById("fix-loading");
+  const fixPatchOutput = document.getElementById("fix-patch-output");
+  const btnCopyPatch = document.getElementById("btn-copy-patch");
+
+  btnRunFix.addEventListener("click", async () => {
+    const target = fixTargetPath.value.trim() || "D:\\prodforge";
+    fixLoading.classList.remove("hidden");
+    fixPatchOutput.textContent = "// Synthesizing unified patch...";
+
+    try {
+      const res = await fetch("/api/fix", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          target_path: target,
+          apply: fixApplyCheckbox.checked
+        })
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "Auto-fix failed");
+      }
+
+      const data = await res.json();
+      if (data.unified_patch) {
+        fixPatchOutput.textContent = data.unified_patch;
+      } else {
+        fixPatchOutput.textContent = "// Target code has no auto-fixable vulnerabilities. Already clean!";
+      }
+
+      if (data.applied) {
+        alert(`Successfully applied ${data.total_fixes_generated} code repair(s) directly to disk!`);
+      }
+    } catch (err) {
+      fixPatchOutput.textContent = `// Auto-fix Error: ${err.message}`;
+    } finally {
+      fixLoading.classList.add("hidden");
+    }
+  });
+
+  btnCopyPatch.addEventListener("click", () => {
+    if (fixPatchOutput.textContent) {
+      navigator.clipboard.writeText(fixPatchOutput.textContent);
+      btnCopyPatch.textContent = "Copied!";
+      setTimeout(() => (btnCopyPatch.textContent = "Copy Patch"), 2000);
+    }
+  });
+
+  // --- TAB 4: QA TEST SUITE ---
   const btnRunTest = document.getElementById("btn-run-test");
   const btnQaPreset = document.getElementById("btn-qa-preset");
   const qaCode = document.getElementById("qa-code");
@@ -354,37 +476,34 @@ def execute_user_query(user_id, raw_filter):
     }
   });
 
-  // --- TAB 4: HARDENER ---
+  // --- TAB 5: CONTAINERS & KUBERNETES ---
+  const btnRunK8s = document.getElementById("btn-run-k8s");
   const btnRunHarden = document.getElementById("btn-run-harden");
-  const hardenPath = document.getElementById("harden-path");
-  const hardenApply = document.getElementById("harden-apply");
+  const k8sAppName = document.getElementById("k8s-app-name");
+  const k8sDomain = document.getElementById("k8s-domain");
   const hardenLoading = document.getElementById("harden-loading");
   const hardenContainer = document.getElementById("harden-artifacts-container");
-  const hardenStackBadge = document.getElementById("harden-stack-badge");
 
-  btnRunHarden.addEventListener("click", async () => {
-    const path = hardenPath.value.trim() || ".";
+  btnRunK8s.addEventListener("click", async () => {
     hardenLoading.classList.remove("hidden");
     hardenContainer.innerHTML = "";
 
     try {
-      const res = await fetch("/api/harden", {
+      const res = await fetch("/api/k8s", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          project_path: path,
-          apply: hardenApply.checked
+          app_name: k8sAppName.value.trim() || "prodforge-app",
+          domain: k8sDomain.value.trim() || "api.example.com"
         })
       });
 
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.detail || "Hardening failed");
+        throw new Error(err.detail || "Kubernetes generation failed");
       }
 
       const data = await res.json();
-      hardenStackBadge.textContent = data.detected_stack.toUpperCase();
-
       hardenContainer.innerHTML = "";
       data.artifacts.forEach(art => {
         const div = document.createElement("div");
@@ -395,10 +514,6 @@ def execute_user_query(user_id, raw_filter):
         `;
         hardenContainer.appendChild(div);
       });
-
-      if (data.applied) {
-        alert("Production hardening files successfully created on disk!");
-      }
     } catch (err) {
       hardenContainer.innerHTML = `<p style="color:var(--accent-rose);">Error: ${err.message}</p>`;
     } finally {
@@ -406,7 +521,39 @@ def execute_user_query(user_id, raw_filter):
     }
   });
 
-  // --- TAB 5: FINOPS & FEASIBILITY ---
+  btnRunHarden.addEventListener("click", async () => {
+    hardenLoading.classList.remove("hidden");
+    hardenContainer.innerHTML = "";
+
+    try {
+      const res = await fetch("/api/harden", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          project_path: "D:\\prodforge",
+          apply: false
+        })
+      });
+
+      const data = await res.json();
+      hardenContainer.innerHTML = "";
+      data.artifacts.forEach(art => {
+        const div = document.createElement("div");
+        div.style.marginBottom = "1.5rem";
+        div.innerHTML = `
+          <h4 style="font-size:0.88rem; margin-bottom:0.35rem; color:var(--accent-cyan);">${art.filename} <span style="font-size:0.75rem; color:var(--text-muted); font-weight:normal;">(${art.description})</span></h4>
+          <pre class="code-block code-font">${escapeHtml(art.content)}</pre>
+        `;
+        hardenContainer.appendChild(div);
+      });
+    } catch (err) {
+      hardenContainer.innerHTML = `<p style="color:var(--accent-rose);">Error: ${err.message}</p>`;
+    } finally {
+      hardenLoading.classList.add("hidden");
+    }
+  });
+
+  // --- TAB 6: FINOPS & FEASIBILITY ---
   const btnRunFeas = document.getElementById("btn-run-feas");
   const feasIdea = document.getElementById("feas-idea");
   const feasDau = document.getElementById("feas-dau");

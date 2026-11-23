@@ -83,6 +83,8 @@ def scan_quality(source_code: str) -> List[QualityFinding]:
             continue
         if '"pattern":' in clean_line or '"description":' in clean_line or '"remediation":' in clean_line:
             continue
+        if any(marker in clean_line for marker in ("re.search(r", "re.compile(r", "re.sub(r", "re.match(r", "re.search(\"", "re.search('")):
+            continue
 
         for rule in QUALITY_RULES:
             if re.search(rule["pattern"], clean_line):
