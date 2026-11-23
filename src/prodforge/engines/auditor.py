@@ -8,6 +8,9 @@ from __future__ import annotations
 
 import ast
 import os
+import subprocess
+import tempfile
+import shutil
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 from pydantic import BaseModel, Field
@@ -238,6 +241,18 @@ def audit_single_file(file_path: Path) -> tuple[List[FileAuditFinding], Complexi
     return findings, metrics
 
 
+def is_git_url(target: str) -> bool:
+    """Check if target string represents a remote Git repository URL."""
+    if not isinstance(target, str):
+        return False
+    t = target.strip()
+    if t.startswith(("http://", "https://", "git@", "ssh://", "git://")):
+        return True
+    if t.endswith(".git") or "github.com/" in t or "gitlab.com/" in t or "bitbucket.org/" in t:
+        return True
+    return False
+
+
 def audit_code_or_path(
     target: str,
     raw_code: Optional[str] = None,
@@ -245,7 +260,7 @@ def audit_code_or_path(
     model: Optional[str] = None,
     fail_under: Optional[int] = None
 ) -> CodeAuditResult:
-    """Audit a directory, a single file, or a raw code string snippet with 5-pillar scoring."""
+    """Audit a remote Git repo, directory, single file, or raw code string with 5-pillar scoring."""
     all_findings: List[FileAuditFinding] = []
     combined_metrics = ComplexityMetrics()
     scanned_count = 0
@@ -254,6 +269,8 @@ def audit_code_or_path(
     has_docker = False
     has_ci = False
     policy: Optional[EnterprisePolicy] = None
+    temp_dir_obj: Optional[tempfile.TemporaryDirectory] = None
+    original_target_url: Optional[str] = None
 
     if raw_code is not None:
         scanned_count = 1
@@ -298,9 +315,19 @@ def audit_code_or_path(
                 code_lines=sum(1 for l in lines if l.strip())
             )
     else:
-        path = Path(target).resolve()
-        if not path.exists():
-            raise FileNotFoundError(f"Target path '{target}' does not exist.")
+        if is_git_url(target):
+            original_target_url = target.strip()
+            temp_dir_obj = tempfile.TemporaryDirectory(prefix="prodforge_git_")
+            clone_dest = Path(temp_dir_obj.name).resolve()
+            cmd = ["git", "clone", "--depth", "1", original_target_url, str(clone_dest)]
+            res = subprocess.run(cmd, capture_output=True, text=True, timeout=180)
+            if res.returncode != 0:
+                raise RuntimeError(f"Failed to clone Git repository '{original_target_url}': {res.stderr or res.stdout}")
+            path = clone_dest
+        else:
+            path = Path(target).resolve()
+            if not path.exists():
+                raise FileNotFoundError(f"Target path '{target}' does not exist.")
 
         base_dir = path if path.is_dir() else path.parent
         policy = load_governance_policy(base_dir)
@@ -340,6 +367,15 @@ def audit_code_or_path(
                         if f_metrics.max_nesting_depth > combined_metrics.max_nesting_depth:
                             combined_metrics.max_nesting_depth = f_metrics.max_nesting_depth
                         combined_metrics.cyclomatic_estimate += f_metrics.cyclomatic_estimate
+
+        # Normalize temporary clone path to clean relative file paths
+        if original_target_url:
+            for f in all_findings:
+                try:
+                    rel = Path(f.file_path).relative_to(path)
+                    f.file_path = str(rel).replace("\\", "/")
+                except Exception:
+                    pass
 
     # Filter out findings suppressed by enterprise policy
     if policy:
@@ -462,8 +498,14 @@ Provide:
             "4. **Automated CI/CD Quality Gate:** Deploy `prodforge.sarif` to GitHub Code Scanning to block insecure Pull Requests automatically."
         )
 
+    if temp_dir_obj:
+        try:
+            temp_dir_obj.cleanup()
+        except Exception:
+            pass
+
     return CodeAuditResult(
-        target_path=target,
+        target_path=original_target_url if original_target_url else (str(path) if raw_code is None else "<in-memory-snippet>"),
         is_directory=is_dir,
         total_files_scanned=scanned_count,
         readiness_score=readiness_score,

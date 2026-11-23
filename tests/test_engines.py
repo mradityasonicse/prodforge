@@ -3,10 +3,19 @@
 import pytest
 from pathlib import Path
 from prodforge.engines.planner import generate_architecture_plan
-from prodforge.engines.auditor import audit_code_or_path
+from prodforge.engines.auditor import audit_code_or_path, is_git_url
 from prodforge.engines.qa_tester import generate_test_suite
 from prodforge.engines.hardener import generate_production_hardening
 from prodforge.engines.feasibility import analyze_feasibility
+
+
+def test_is_git_url():
+    assert is_git_url("https://github.com/octocat/Hello-World.git") is True
+    assert is_git_url("https://gitlab.com/group/project") is True
+    assert is_git_url("git@github.com:owner/repo.git") is True
+    assert is_git_url("C:\\Users\\OMEN\\project") is False
+    assert is_git_url("src/main.py") is False
+    assert is_git_url("<test>") is False
 
 
 def test_planner_engine():

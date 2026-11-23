@@ -36,3 +36,6 @@ Thumbs.db
 *.sarif
 audit-report.html
 k8s-manifests/
+
+*.html
+*.sarif
