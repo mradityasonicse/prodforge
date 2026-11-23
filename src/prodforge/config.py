@@ -11,9 +11,11 @@ from typing import Optional, Literal
 from pydantic import BaseModel, Field
 from dotenv import load_dotenv
 
-# Search for .env in current directory, parent dirs, or user home
+# Search for .env in current directory, user home, or repository root
 load_dotenv(Path.cwd() / ".env")
 load_dotenv(Path.home() / ".prodforge" / ".env")
+if Path("D:/prodforge/.env").exists():
+    load_dotenv(Path("D:/prodforge/.env"))
 
 ProviderType = Literal["gemini", "openai", "anthropic", "groq", "openrouter", "ollama", "offline"]
 
