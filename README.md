@@ -44,7 +44,26 @@ OLLAMA_HOST=http://localhost:11434
 
 ---
 
-## 🛠️ CLI Commands & Usage
+## ⚡ Quick Command Cheatsheet (In Simple Words)
+
+| What you want to do | Command to run | What it does |
+|:---|:---|:---|
+| 🔍 **Scan any file for bugs & security holes** | `prodforge audit app.py` | Scans the file and gives it a 0-100 Production Readiness Score. |
+| 🌐 **Scan an entire GitHub repo directly** | `prodforge audit https://github.com/user/repo` | Clones, audits all files, and outputs vulnerabilities. |
+| 📊 **Generate a visual HTML report** | `prodforge audit . --html report.html` | Creates an executive HTML dashboard you can open in any browser. |
+| 🛡️ **Export SARIF for GitHub Code Scanning** | `prodforge audit . --sarif report.sarif` | Generates official OASIS SARIF v2.1.0 report for CI/CD gates. |
+| 🛠️ **Auto-fix vulnerabilities in code** | `prodforge fix app.py --apply` | Automatically fixes security bugs, removes leaks, and saves file. |
+| 💡 **Turn any idea into system architecture** | `prodforge plan "Food delivery app"` | Creates C4 system design, database schemas, and roadmaps. |
+| 🧪 **Auto-generate complete test suites** | `prodforge test app.py --out test_app.py` | Automatically writes pytest / unit tests with edge cases. |
+| ☸️ **Generate enterprise Kubernetes manifests** | `prodforge k8s .` | Creates production-ready Deployment, Service, and Ingress YAMLs. |
+| 🚀 **Generate GitHub Actions CI/CD gate** | `prodforge ci` | Creates a workflow that blocks insecure Pull Requests. |
+| 🖥️ **Open visual web dashboard** | `prodforge studio` | Opens interactive browser UI at `http://localhost:8000`. |
+| 🌍 **Share web studio globally with anyone** | `prodforge share` | Gives you a public HTTPS link to share with anyone worldwide. |
+| ⚙️ **Check connected AI models & keys** | `prodforge config` | Shows whether Gemini, OpenAI, or Offline mode is active. |
+
+---
+
+## 🛠️ Detailed CLI Commands & Usage
 
 ### 1. Instant Public Web Studio Sharing
 ```powershell
