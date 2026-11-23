@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ProdForge Studio — Autonomous Production AI Suite</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Mermaid.js for real-time C4 and architecture rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <!-- Marked for markdown rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <!-- Ambient background glow layers (Monochrome depth, subtle cyan/emerald) -->
+  <div class="ambient-glow glow-1"></div>
+  <div class="ambient-glow glow-2"></div>
+
+  <!-- Header / Nav -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-logo">
+        <span class="logo-symbol">⚡</span>
+        <span class="brand-name">Prod<span class="brand-accent">Forge</span></span>
+      </div>
+      <span class="version-tag">v1.0.0 PROD-READY</span>
+    </div>
+
+    <div class="header-center">
+      <nav class="nav-tabs">
+        <button class="nav-tab active" data-tab="plan">
+          <span class="tab-icon">📐</span> Architecture & Plan
+        </button>
+        <button class="nav-tab" data-tab="audit">
+          <span class="tab-icon">🛡️</span> Code Auditor
+        </button>
+        <button class="nav-tab" data-tab="test">
+          <span class="tab-icon">🧪</span> QA Test Suite
+        </button>
+        <button class="nav-tab" data-tab="harden">
+          <span class="tab-icon">🚀</span> Hardener
+        </button>
+        <button class="nav-tab" data-tab="feasibility">
+          <span class="tab-icon">📊</span> FinOps & Scale
+        </button>
+      </nav>
+    </div>
+
+    <div class="header-right">
+      <div class="provider-pill">
+        <span class="pulse-dot"></span>
+        <span id="provider-badge">DETECTING...</span>
+      </div>
+      <div class="model-badge" id="active-model-badge">gemini-2.5-flash</div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="main-content">
+
+    <!-- TAB 1: PLANNER & ARCHITECTURE -->
+    <section class="tab-panel active" id="tab-plan">
+      <div class="bento-grid-2">
+        <!-- Input Card -->
+        <div class="card interactive-card">
+          <div class="card-header">
+            <h3>System Specification & Idea</h3>
+            <span class="badge">Input</span>
+          </div>
+          <div class="card-body">
+            <label class="form-label" for="plan-idea">Product / System Concept</label>
+            <textarea id="plan-idea" class="input-area" rows="6" placeholder="e.g. Build an enterprise real-time payment settlement engine with multi-region failover, PostgreSQL ledger, and Kafka streaming..."></textarea>
+
+            <label class="form-label" for="plan-constraints">Constraints / Preferred Stack (Optional)</label>
+            <input type="text" id="plan-constraints" class="input-text" placeholder="e.g. Python FastAPI, PostgreSQL, Redis, Kubernetes, Zero-Trust TLS">
+
+            <div class="action-row">
+              <button class="btn btn-primary" id="btn-run-plan">
+                <span class="btn-icon">⚡</span> Synthesize Architecture
+              </button>
+              <button class="btn btn-secondary" id="btn-plan-preset">
+                Load FinTech Preset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Telemetry / Diagram Preview Card -->
+        <div class="card output-card">
+          <div class="card-header">
+            <h3>Architecture Blueprint & C4 Model</h3>
+            <div class="card-actions">
+              <span class="score-pill" id="plan-score-pill">Feasibility: --</span>
+              <button class="btn-sm" id="btn-copy-plan">Copy Plan</button>
+            </div>
+          </div>
+          <div class="card-body scrollable-body">
+            <div id="plan-loading" class="loading-state hidden">
+              <div class="spinner"></div>
+              <p>Synthesizing C4 diagrams, STRIDE threat models, and execution roadmap...</p>
+            </div>
+            <div id="plan-diagram-box" class="diagram-box hidden">
+              <h4>System Component Flow</h4>
+              <div id="mermaid-render" class="mermaid-container"></div>
+            </div>
+            <div id="plan-markdown-output" class="markdown-output">
+              <div class="empty-state">
+                <div class="empty-icon">📐</div>
+                <p>Enter your product or system idea to generate a production-ready C4 blueprint, database schema, STRIDE threat analysis, and phased roadmap.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: CODE AUDITOR -->
+    <section class="tab-panel" id="tab-audit">
+      <div class="bento-grid-2">
+        <!-- Code Input Card -->
+        <div class="card interactive-card">
+          <div class="card-header">
+            <h3>Target Code / Project Path</h3>
+            <div class="toggle-group">
+              <button class="btn-toggle active" id="btn-audit-snippet">Snippet</button>
+              <button class="btn-toggle" id="btn-audit-path">Local Path</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div id="snippet-input-group">
+              <label class="form-label" for="audit-code">Source Code Snippet</label>
+              <textarea id="audit-code" class="input-area code-font" rows="12" placeholder="# Paste your Python, TypeScript, or Node code here..."></textarea>
+            </div>
+            <div id="path-input-group" class="hidden">
+              <label class="form-label" for="audit-path">Local Project / File Path</label>
+              <input type="text" id="audit-path" class="input-text" placeholder="e.g. D:\prodforge or C:\Projects\MyAPI">
+            </div>
+
+            <div class="action-row">
+              <button class="btn btn-primary" id="btn-run-audit">
+                <span class="btn-icon">🛡️</span> Execute Production Audit
+              </button>
+              <button class="btn btn-secondary" id="btn-audit-vuln-preset">
+                Load Vulnerable Sample
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Audit Findings & Readiness Score Card -->
+        <div class="card output-card">
+          <div class="card-header">
+            <h3>Production Readiness Scorecard</h3>
+            <div class="score-badge-large" id="audit-score-badge">--/100</div>
+          </div>
+          <div class="card-body scrollable-body">
+            <div id="audit-loading" class="loading-state hidden">
+              <div class="spinner"></div>
+              <p>Scanning OWASP Top 10, detecting secrets, evaluating AST complexity...</p>
+            </div>
+
+            <div id="audit-results-content" class="hidden">
+              <!-- Score Metres & Tallies -->
+              <div class="telemetry-grid">
+                <div class="telemetry-pill crit"><span id="tally-crit">0</span> Critical</div>
+                <div class="telemetry-pill high"><span id="tally-high">0</span> High</div>
+                <div class="telemetry-pill med"><span id="tally-med">0</span> Medium</div>
+                <div class="telemetry-pill low"><span id="tally-low">0</span> Low</div>
+              </div>
+
+              <!-- Findings List -->
+              <h4 class="section-title">Discovered Findings & Remediation</h4>
+              <div id="findings-list" class="findings-container"></div>
+
+              <!-- LLM Advice -->
+              <h4 class="section-title">Architectural Hardening Plan</h4>
+              <div id="audit-llm-advice" class="markdown-output small-text"></div>
+            </div>
+
+            <div id="audit-empty" class="empty-state">
+              <div class="empty-icon">🛡️</div>
+              <p>Run a deep audit to inspect vulnerabilities, code quality smells, and calculate the Production Readiness Score.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: QA TEST SUITE -->
+    <section class="tab-panel" id="tab-test">
+      <div class="bento-grid-2">
+        <div class="card interactive-card">
+          <div class="card-header">
+            <h3>Source Under Test</h3>
+            <span class="badge">QA Engine</span>
+          </div>
+          <div class="card-body">
+            <label class="form-label" for="qa-code">Function / Module Code</label>
+            <textarea id="qa-code" class="input-area code-font" rows="12" placeholder="# Paste code to generate comprehensive unit tests, mocks, and edge-cases..."></textarea>
+            
+            <div class="flex-row">
+              <div>
+                <label class="form-label" for="qa-framework">Framework</label>
+                <select id="qa-framework" class="input-select">
+                  <option value="pytest">pytest (Python)</option>
+                  <option value="vitest">Vitest (TypeScript / JS)</option>
+                  <option value="jest">Jest (JavaScript)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="action-row">
+              <button class="btn btn-primary" id="btn-run-test">
+                <span class="btn-icon">🧪</span> Generate Test Suite
+              </button>
+              <button class="btn btn-secondary" id="btn-qa-preset">
+                Load Math/API Sample
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card output-card">
+          <div class="card-header">
+            <h3>Synthesized Test Suite</h3>
+            <button class="btn-sm" id="btn-copy-test">Copy Tests</button>
+          </div>
+          <div class="card-body scrollable-body">
+            <div id="qa-loading" class="loading-state hidden">
+              <div class="spinner"></div>
+              <p>Deriving function signatures, mocking dependencies, writing assertions...</p>
+            </div>
+            <pre id="qa-test-output" class="code-block code-font">// Tests will appear here...</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: PRODUCTION HARDENER -->
+    <section class="tab-panel" id="tab-harden">
+      <div class="bento-grid-2">
+        <div class="card interactive-card">
+          <div class="card-header">
+            <h3>Project Containerization & CI/CD</h3>
+            <span class="badge">DevSecOps</span>
+          </div>
+          <div class="card-body">
+            <label class="form-label" for="harden-path">Project Root Directory</label>
+            <input type="text" id="harden-path" class="input-text" value="D:\prodforge">
+
+            <div class="checkbox-row">
+              <input type="checkbox" id="harden-apply">
+              <label for="harden-apply">Apply directly to disk (writes Dockerfile, compose, and CI workflows)</label>
+            </div>
+
+            <div class="action-row">
+              <button class="btn btn-primary" id="btn-run-harden">
+                <span class="btn-icon">🚀</span> Generate Hardening Suite
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card output-card">
+          <div class="card-header">
+            <h3>Generated Artifacts</h3>
+            <span class="badge" id="harden-stack-badge">DETECTING...</span>
+          </div>
+          <div class="card-body scrollable-body">
+            <div id="harden-loading" class="loading-state hidden">
+              <div class="spinner"></div>
+              <p>Generating multi-stage non-root Dockerfile, compose, CI/CD gates, healthchecks...</p>
+            </div>
+            <div id="harden-artifacts-container">
+              <div class="empty-state">
+                <div class="empty-icon">🚀</div>
+                <p>Click "Generate Hardening Suite" to generate multi-stage containers, Docker Compose, CI/CD pipelines, and healthcheck routers.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: FINOPS & FEASIBILITY -->
+    <section class="tab-panel" id="tab-feasibility">
+      <div class="bento-grid-2">
+        <div class="card interactive-card">
+          <div class="card-header">
+            <h3>Scale & Concurrency Parameters</h3>
+            <span class="badge">FinOps</span>
+          </div>
+          <div class="card-body">
+            <label class="form-label" for="feas-idea">System Architecture / Workload</label>
+            <textarea id="feas-idea" class="input-area" rows="6" placeholder="Describe the application workload, traffic spikes, and state storage..."></textarea>
+
+            <label class="form-label" for="feas-dau">Daily Active Users (DAU)</label>
+            <input type="number" id="feas-dau" class="input-text" value="50000" step="5000">
+
+            <div class="action-row">
+              <button class="btn btn-primary" id="btn-run-feas">
+                <span class="btn-icon">📊</span> Compute Scaling & FinOps
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="card output-card">
+          <div class="card-header">
+            <h3>Capacity & Cost Forecast</h3>
+            <div class="cost-badge" id="feas-cost-badge">$0 / mo</div>
+          </div>
+          <div class="card-body scrollable-body">
+            <div id="feas-loading" class="loading-state hidden">
+              <div class="spinner"></div>
+              <p>Calculating peak RPS, compute allocations, database connection limits, FinOps models...</p>
+            </div>
+            <div id="feas-results-container" class="hidden">
+              <div class="telemetry-grid">
+                <div class="telemetry-pill blue"><span id="feas-peak-rps">0</span> Peak RPS</div>
+                <div class="telemetry-pill green"><span id="feas-verdict">FEASIBLE</span></div>
+              </div>
+
+              <h4 class="section-title">Itemized Cloud Infrastructure Estimate</h4>
+              <div id="feas-cost-table" class="table-wrapper"></div>
+
+              <h4 class="section-title">Executive Scaling Strategy</h4>
+              <div id="feas-markdown" class="markdown-output small-text"></div>
+            </div>
+
+            <div id="feas-empty" class="empty-state">
+              <div class="empty-icon">📊</div>
+              <p>Calculate throughput limits, cloud infrastructure costs, and single-point-of-failure bottlenecks.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
